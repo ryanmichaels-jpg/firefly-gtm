@@ -1,99 +1,28 @@
-# Positioning
+# Positioning — Firefly
 
-*The source of truth for how we talk about what we do, who we beat, and who we lose to. Reference this file before writing any outbound copy, building any battlecard, or preparing for a competitive evaluation.*
+## The non-negotiable motion rule
+**One-offs work; sequencing does not** in these segments. Build event-triggered, high-context, human-finished one-offs. Do NOT build email-blast/sequencing flows or use deliverability/inbox-warmup skills. The pipeline ends by routing scored accounts to a rep worklist.
 
-Last updated: [YYYY-MM-DD]
+## Primary moat: trusted-standard / regulatory
+Regulation is a tailwind for everyone; the moat is being the **certified, validated, embedded standard** so switching is operationally reckless. Earn it via:
+1. Certifications & conformance (UL life-safety, state approved-vendor lists, mandate-spec conformance, SOC 2, HIPAA, FERPA).
+2. Marquee validated reference deployments (Veeva-style reference base).
+3. Deep embedding → switching costs (daily system-of-record, multi-year paid-upfront).
+4. Shape the standards (associations, mandate spec-writing).
+5. Third-party trust (insurer/liability, EMS endorsements).
 
-*See example: `examples/sample-company/context/positioning.md`*
+Weakest moat today: data/network effects (HIPAA limits cross-customer pooling; early-stage density is low across any vendor in this market). Treat as upside amplifier, not foundation.
 
----
+## Comparable lessons (Samsara / Toast / ServiceTitan / Veeva)
+None won on hardware margin or by slaying one incumbent. All four: (1) used a tailwind/forced-buy to land cheap, (2) consolidated a fragmented stack into a system-of-record, (3) expanded within the account, (4) built a moat (data / density+references / ICP+domain / regulation). Firefly most resembles Samsara (hardware+cloud, mandate-as-wedge, fragmented field) with a Veeva-style regulatory-moat opportunity, run via Toast-style density and ServiceTitan ICP discipline.
 
-## Core Positioning Statement
+## Value pillars (message)
+- Staff duress + WPV: nurse safety, retention, liability, mandate compliance.
+- Detect → Respond + EMS: faster response = lives + liability.
+- Consolidation: replace 5–10 fragmented response tools.
+- Compliance: meet the exact mandate spec (the certified standard).
 
-[Your company] is [category description] for [specific customer type]. [One sentence on the primary differentiation — what you do that the obvious alternatives don't.]
-
-**The mechanism:** [The specific capability or approach that makes the above possible. Not a feature list — the underlying reason your product works differently.]
-
----
-
-## Value Pillars
-
-### Pillar 1: [Name — e.g., "Speed"]
-
-**Leads for:** [Which persona cares most about this]
-
-[2–3 sentences on what you deliver on this dimension. Be specific — name the outcome, not the capability.]
-
-**Proof points:**
-- [Metric or customer outcome — e.g., "Teams reduce X from Y days to Z hours"]
-- [Second proof point]
-
----
-
-### Pillar 2: [Name — e.g., "Reliability"]
-
-**Leads for:** [Persona]
-
-[2–3 sentences.]
-
-**Proof points:**
-- [Metric or outcome]
-- [Second proof point]
-
----
-
-### Pillar 3: [Name — e.g., "Integration depth"]
-
-**Leads for:** [Persona]
-
-[2–3 sentences.]
-
-**Proof points:**
-- [Metric or outcome]
-
----
-
-## Messaging Matrix
-
-| Persona | Lead with | Avoid |
-|---------|-----------|-------|
-| [Champion] | [The outcome they own and want to prove] | [Generic ROI language, executive speak] |
-| [Economic buyer] | [Business impact in their terms] | [Technical details, feature lists] |
-| [Technical evaluator] | [Integration quality, API, migration path] | [Marketing claims without specifics] |
-
----
-
-## Competitive Positioning
-
-Full battlecards: `context/competitor-radar.md`
-
-| Competitor | We win when | We lose when | Note |
-|------------|-------------|-------------|------|
-| [Competitor A] | [Specific condition] | [Specific condition] | [Any nuance — partnership potential, different segment, etc.] |
-| [Competitor B] | [Specific condition] | [Specific condition] | |
-| [Competitor C] | [Specific condition] | [Specific condition] | |
-
----
-
-## What Not to Say
-
-**[Don't position as X]** — [Why this frame is wrong. What it implies vs. what's actually true.]
-
-**[Don't lead with Y in outbound]** — [Why this falls flat. What to say instead.]
-
-**[Don't promise Z]** — [Where this creates problems. What the honest version is.]
-
----
-
-## Reference Customers by Use Case
-
-*Who to mention for which conversation. Only reference publicly unless noted.*
-
-| Customer | Use case | Can reference? |
-|----------|----------|---------------|
-| [Company] | [What they use you for] | [Yes / Anonymize as "a [type] company"] |
-| [Company] | [Use case] | [Yes / No] |
-
----
-
-*Sources: [List the conversations, documents, or data that informed this document]*
+## Integrate vs replace (handle the frenemies)
+- Replace: duress/panic, standalone notification, incident/PSIM.
+- Integrate (now), displace (later): Genetec/Exacq/Milestone/Avigilon cameras, Singlewire InformaCast notification. In deals, treat as integrate-now-compete-later, not pure rivals.
+- "Runs Genetec" alone is NOT a green flag (integrate-layer). The green flag is fragmentation/point-tools in the replace layer.

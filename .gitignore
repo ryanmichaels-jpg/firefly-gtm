@@ -26,3 +26,23 @@ outputs/raw/
 # Sync script live data outputs (contain metrics, not committed)
 outputs/campaigns/**/results-sync.json
 context/signal-performance-sync.json
+
+# Pipeline working data: regenerable + (mart/tam.csv) holds contact data
+data/raw/
+data/staging/
+data/mart/tam.csv
+data/mart/tam.json
+
+# Allow hand-curated reference data + redacted sample marts (no PII)
+!data/reference/*.csv
+!data/mart/tam_sample.csv
+!data/mart/tam_scored_sample.csv
+
+# Logs from the seed pipeline
+*.log
+
+# Claude Design mockup bundle (reference material, not the deliverable)
+dashboard/mockup/
+
+# Allow the PII-redacted dashboard data artifact (built from tam_scored.csv)
+!dashboard/data.json

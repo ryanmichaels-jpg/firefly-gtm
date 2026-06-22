@@ -1,102 +1,30 @@
-# Competitor Radar
+# Competitor Radar — Firefly
 
-*Live battlecards for every significant competitor. Used by Claude to sharpen positioning in outreach, handle objections in sequences, and flag competitive accounts for priority treatment.*
+Full matrix in `data/reference/competitors.csv`. Surfaces = Ember (platform), Panic/Duress, Gunshot, Gateway/Hub. Mark each competitor by surface + whether they REPLACE or INTEGRATE.
 
-Last updated: [YYYY-MM-DD]
+## Full-stack threats (compete on platform AND hardware — watch closely)
+- **CENTEGIX** (CrisisAlert): wearable panic + own RF gateway + alerting/mapping. Closest hardware analog; owns its gateway network like Firefly.
+- **Navigate360**: K-12 safety ecosystem (EM + wearable panic). Same "end fragmented panic" pitch.
+- **Verkada**: cloud physical-security platform; builds own devices. Closest broad-stack analog.
+- **Motorola Solutions**: Avigilon video + Rave notification + Noggin CEM.
+- **Securitas Healthcare (Strongline)**: healthcare staff duress + RTLS; entrenched via clinical bundle.
 
-**Update cadence:** Update within 24 hours of every competitive win or loss. Full review every 60 days for pattern changes. A battlecard updated after a real deal is worth ten written in a quarterly planning session from memory.
+## Platform-led (compete on Ember)
+Everbridge, Raptor, CrisisGo, Alertus, Omnilert, Status Solutions, HiveWatch/Resolver/Ontic, Genetec Mission Control.
 
-*See example: `examples/sample-company/context/competitor-radar.md`*
+## Hardware-led
+- Panic/duress: React Mobile, ROAR/AppArmor, Relay, 911Cellular, Inovonics, RF Technologies/CenTrak/Litum/Midmark, Aiphone/BluePoint.
+- Gunshot: AmberBox (most direct to Firefly's gunshot sensor), Shooter Detection Systems, EAGL, HALO, ShotSpotter, ZeroEyes (visual), Evolv/CEIA/Xtract One (weapons screening).
 
----
+## Integrate-layer — NOT competitors (camera/VMS Firefly ingests)
+Genetec Omnicast/Synergis, **Exacq (ExacqVision, Johnson Controls)**, Milestone, Avigilon. Treat as integration targets, not rivals.
 
-## How to Use This File
+## Frenemies (integrate now, compete later)
+- **Genetec** (cameras = integrate; Mission Control platform = eventual collision).
+- **Singlewire InformaCast** (Firefly integrates via API; also a notification competitor).
 
-When Claude builds outreach or handles a competitive scenario, it references this file to:
-- Sharpen the angle when an account uses or is evaluating a competitor
-- Generate objection-handling copy
-- Flag accounts for competitive treatment in sequences
+## Gateway/hub = least-contested surface
+Only CENTEGIX, React Mobile, Inovonics ship their own connectivity; most ride the customer's WiFi/IT. Firefly's no-IT private network is a real differentiator.
 
----
-
-## [Competitor A]
-
-**One-line summary:** [What they are and who they serve]
-**Market position:** [Leader / Challenger / Niche]
-**Pricing:** [What's known about their pricing]
-**Typical buyer:** [Who buys from them]
-
-**Their strengths (be honest):**
-- [Strength 1]
-- [Strength 2]
-
-**Their weaknesses:**
-- [Weakness 1]
-- [Weakness 2]
-
-**Why customers switch to us:**
-- [Reason 1 — ideally with a quote or data point]
-- [Reason 2]
-
-**How to handle "[Competitor A] objection":**
-> [Scripted response — acknowledge their strength, pivot to our edge, anchor on a specific outcome]
-
-**Signal that an account uses them:**
-- [Technographic: e.g., job postings mentioning [Competitor A]]
-- [Behavioral: e.g., content about migrating from [Competitor A]]
-
-**Competitive message for Tier 1 outreach:**
-> [1–2 sentence hook that references competitive context without naming names directly]
-
----
-
-## [Competitor B]
-
-**One-line summary:** [Description]
-**Market position:** [Position]
-
-**Their strengths:**
-- [Strength 1]
-- [Strength 2]
-
-**Their weaknesses:**
-- [Weakness 1]
-- [Weakness 2]
-
-**Why customers switch to us:**
-- [Reason 1]
-- [Reason 2]
-
-**How to handle "[Competitor B] objection":**
-> [Scripted response]
-
-**Signal that an account uses them:**
-- [Detection method]
-
----
-
-## Competitive Landscape Map
-
-| Competitor | Primary market | Price point | Our win rate vs. them | Notes |
-|------------|---------------|-------------|----------------------|-------|
-| [Competitor A] | [Market] | [Price] | [X%] | |
-| [Competitor B] | [Market] | [Price] | [X%] | |
-| [Competitor C] | [Market] | [Price] | [X%] | |
-
----
-
-## Win Patterns
-
-*What the deals we win against each competitor have in common.*
-
-**vs. [Competitor A]:** [Pattern — e.g., "We win when the account has X and values Y over Z"]
-**vs. [Competitor B]:** [Pattern]
-
----
-
-## Loss Patterns
-
-*What we can learn from losses to each competitor.*
-
-**vs. [Competitor A]:** [Pattern — e.g., "We lose when price is the primary criterion and the eval team is junior"]
-**vs. [Competitor B]:** [Pattern]
+## Competitor-follower targeting (JD requirement)
+Accounts engaging with replace-layer vendors (CENTEGIX, Strongline, React Mobile) on LinkedIn are intent-rich, warm targets. Weight replace-layer engagement; ignore integrate-layer.

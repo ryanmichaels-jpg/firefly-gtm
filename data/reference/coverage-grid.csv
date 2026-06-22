@@ -1,0 +1,78 @@
+State,Healthcare WPV,Retail,Hospitality (panic),K-12 (Alyssa's),General-industry,Notable specifics / bill names
+Alabama,N,N,N,P,N,HB216/HB234 Alyssa's (dead/pending)
+Alaska,P,N,N,N,N,SB49 WPV protective order (pending)
+Arizona,Y,N,N,Y (permissive),N,"ARS 36-420.03 WVPP; HB2592 Alyssa's (permissive, enacted 2026)"
+Arkansas,N (penalty),N,N,Y,N,Act753 penalty; School Safety Act 6-15-1302
+California,Y,Y*,Y,N,Y,8 CCR 3342; SB553 all-employer; city hotel ords
+Colorado,Y,N,N,N,N,SB25-166 hospital WPV
+Connecticut,Y,N,N,N,N,PA11-175 + PA24-19 home health/hospice
+Delaware,N (penalty),N,N,N,N,11 Del.C. 612 penalty
+DC,N,N,N,N,N,No mandate located
+Florida,Y~ (penalty),N,Y (Miami Beach),Y,N,HB825 penalty; SB70 Alyssa's; Miami Beach ord
+Georgia,N (penalty),N,N,Y,N,HB383 penalty; HB268 Ricky&Alyssa's (7/1/2025)
+Hawaii,N (penalty),N,N,N,N,HRS 707-711 penalty
+Idaho,N (penalty),N,N,N,N,18-915C penalty
+Illinois,Y,N,Y,P/Y,N,HCVPA+HB3435; Hotel&Casino Act; HB5107 Alyssa's
+Indiana,P (penalty),N,N,N,N,HEA1021 ED penalty; SB419 (dead)
+Iowa,N (penalty),N,N,Y (program),N,HF310 penalty; Gov. mapping initiative
+Kansas,N (penalty),N,N,P,N,HB2249 penalty; HB1328 mapping (pending)
+Kentucky,Y,N,N,Dead,N,HB176/HB194; HB643 Alyssa's (dead)
+Louisiana,Y,Y (penalty),N,Y,N,Lynne Truxillo Act; Act342 retail; Act334 schools
+Maine,Y~,N,N,Dead,N,22 M.R.S. plan; LD808 (dead)
+Maryland,Y (public),N,N,N (mapping only),Y (public),"Davis Martinez Act; HB472 is MAPPING, not Alyssa's"
+Massachusetts,Y (2014),N,Y (local),P,N,2014 HC WPV; H.4767 pending; H.1657 hotel pending
+Michigan,N (penalty),N,N,P,N,PA271/272 penalty+signage; SB76 Alyssa's (pending)
+Minnesota,Y,N,N,P,N,Stat 144.566; HF4571 Alyssa's (pending)
+Mississippi,N (penalty),N,N,Dead,N,97-3-7 penalty; Alyssa's bills (dead)
+Missouri,P (penalty),N,N,Dead,N,565.050 penalty; HB3401 program (pending)
+Montana,N (no enhancement),N,N,P (intro),N,HB590 reporting; LC1521 (intro)
+Nebraska,N (penalty),N,N,Y (mapping),N,LB1002 penalty+signage; LB1329 mapping
+Nevada,Y,N,N,N,N,NRS 618.7311 WVPP; SB182 (2025)
+New Hampshire,Y,N,N,N,N,RSA 277-C + SB29 reporting
+New Jersey,Y,P,Y (100+ rooms),Y (first state),P,26:2H-5.17; PL2019 c123 hotels; A764 Alyssa's
+New Mexico,N (penalty),N,N,N,N,30-3-9.2 penalty
+New York,Y,Y,Y (NYC),Y (consider),Y (public §27-b),Ch.618/2025; Retail Worker Safety Act; NYC Safe Hotels
+North Carolina,Y,N,N,Y (mapping),N,HB125 ED LEO; GS115C-105.53 mapping
+North Dakota,N (penalty),N,N,Y (mapping),N,HB1341 penalty; HB123 mapping
+Ohio,Y,N,N,P,N,HB452; SB105/HB106 Alyssa's (pending)
+Oklahoma,N (penalty/report),N,N,Y,N,63 O.S. 1-114.3 signage/report; SB1357 Alyssa's
+Oregon,Y,N,N,Y (permissive),N,ORS 654.412+SB537; HB3083 Alyssa's (consider)
+Pennsylvania,P,N,Y (local?),P,N,HB926 (pending); HB634 Alyssa's (pending)
+Rhode Island,Y,N,N,N,N,Ch.23-17.28 hospital WPV
+South Carolina,P (penalty),N,N,P,N,H.3480 (pending); H.3258 Alyssa's (pending)
+South Dakota,N (penalty),N,N,N,N,22-18-1.05 penalty
+Tennessee,N (penalty),N,N,Y (evaluate),N,39-13-118 penalty; HB0322 Alyssa's
+Texas,Y,N (HC only),N,Y (every classroom),N,SB240 HC; SB838 schools
+Utah,Y (reporting),N,N,Y (wearable),N,HB380 reporting; HB84 Alyssa's wearable
+Vermont,Y,N,N,N,N,Act 9 hospital WPV
+Virginia,Y,Vetoed (HB1919),P (HB967),Y (permissive),P (vetoed),HB2269/SB1260 HC; HB592 schools; HB1919 vetoed
+Washington,Y,Y,Y (HB1524),Y,Y~ (lone-worker),RCW49.19+HB1162; HB1524; ESSB5004 schools
+West Virginia,N (penalty),N,N,Y (permissive/contingent),N,61-2-10b penalty; HB4798 Alyssa's (funding-contingent)
+Wisconsin,N (penalty),N,N,Y (mapping),N,Act209 penalty; Act109 mapping
+Wyoming,P (none enacted),N,N,N,N,HB155 reporting (status unconfirmed)
+"Legend: Y=enacted/in effect (or signed, phasing) · P=pending/partial · N=none found · * CA retail via SB553 (general-industry) · ~ narrow/penalty-only/not-yet-effective",,,,,,
+LEGEND — cell qualifiers,why a plain Y/N isn't the whole story,,,,,
+Y,"Enacted and in force (or signed, phasing in)",,,,,
+P,Pending — introduced / in committee / passed one chamber; not yet law,,,,,
+N,None found,,,,,
+Dead,Bill failed at end of session (sine die),,,,,
+Vetoed (HBxxxx),Passed the legislature but governor vetoed — not law,,,,,
+~  (e.g. Y~),Narrow / penalty-only / not-yet-effective,,,,,
+*  (Y*),"Covered indirectly (e.g., CA retail via general-industry SB553)",,,,,
+/  (P/Y),"Ambiguous / transitional status (e.g., near-final but unsigned)",,,,,
+?  (Y (local?)),"Unconfirmed (e.g., disputed Philadelphia hotel ordinance)",,,,,
+(penalty),"No prevention-program/device mandate, but a criminal penalty-enhancement law exists. Counts as N for purchase-driving purposes",,,,,
+(no enhancement),"No program mandate AND no penalty law — a true holdout (e.g., Montana)",,,,,
+(none enacted),"A bill is pending but nothing is in force yet (e.g., Wyoming)",,,,,
+(reporting),"Enacted but only requires incident reporting, not a full program/device",,,,,
+(public) / (public §27-b),"Applies to PUBLIC employers only, not private",,,,,
+(permissive),Enacted but only 'may' / 'must consider' — no install mandate,,,,,
+(permissive/contingent),"Permissive AND funding-contingent (e.g., West Virginia)",,,,,
+(consider) / (evaluate),"The statute's actual verb — permissive, not mandatory",,,,,
+(mapping) / (mapping only),"A facility-MAPPING mandate, not a panic-alert (Alyssa's) law",,,,,
+(program),"A funded state program/initiative, not a statutory mandate",,,,,
+(first state)/(every classroom)/(wearable),Scope / notability tags on an enacted mandate,,,,,
+(NYC)/(Miami Beach)/(local),Enacted at CITY level only — no statewide law,,,,,
+(100+ rooms)/(HB1524),Enacted statewide with a room-count threshold / bill cite,,,,,
+General-industry column,"Cross-sector, ALL-employer WPV mandate (e.g., CA SB553). 'N' = no all-employer mandate (state may still have industry-specific ones)",,,,,
+For outreach,GOLD = Y enacted + mandatory + dated + applies to your buyer. Score down anything with a softening qualifier (penalty/permissive/public/reporting/mapping/local/~) or P / Dead / Vetoed,,,,,

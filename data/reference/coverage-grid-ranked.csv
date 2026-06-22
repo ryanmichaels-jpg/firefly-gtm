@@ -1,0 +1,55 @@
+States ranked by enacted-mandate strength (most → least) for outreach prioritization.,,,,,,,,,
+Score: mandatory enacted = 2 · qualified enacted (permissive/penalty/public/mapping/local/reporting/~) = 1 · pending/dead/vetoed/none = 0. Equal weight across the 5 industries. Max = 10.,,,,,,,,,
+Rank,State,Total,# industries mandated,Healthcare,Retail,Hospitality,K-12,General-industry,Tier
+1,Washington,9,5,2,2,2,2,1,Tier 1 — top priority
+2,California,8,4,2,2,2,0,2,Tier 1 — top priority
+3,New York,7,5,2,2,1,1,1,Tier 1 — top priority
+4,New Jersey,6,3,2,0,2,2,0,Tier 2 — strong
+5,Louisiana,5,3,2,1,0,2,0,Tier 2 — strong
+6,Florida,4,3,1,0,1,2,0,Tier 2 — strong
+6,Illinois,4,2,2,0,2,0,0,Tier 2 — strong
+6,Texas,4,2,2,0,0,2,0,Tier 2 — strong
+9,Arizona,3,2,2,0,0,1,0,Tier 3 — selective
+9,Massachusetts,3,2,2,0,1,0,0,Tier 3 — selective
+9,North Carolina,3,2,2,0,0,1,0,Tier 3 — selective
+9,Oregon,3,2,2,0,0,1,0,Tier 3 — selective
+9,Utah,3,2,1,0,0,2,0,Tier 3 — selective
+9,Virginia,3,2,2,0,0,1,0,Tier 3 — selective
+15,Maryland,2,2,1,0,0,0,1,Tier 3 — selective
+15,Arkansas,2,1,0,0,0,2,0,Tier 3 — selective
+15,Colorado,2,1,2,0,0,0,0,Tier 3 — selective
+15,Connecticut,2,1,2,0,0,0,0,Tier 3 — selective
+15,Georgia,2,1,0,0,0,2,0,Tier 3 — selective
+15,Kentucky,2,1,2,0,0,0,0,Tier 3 — selective
+15,Minnesota,2,1,2,0,0,0,0,Tier 3 — selective
+15,Nevada,2,1,2,0,0,0,0,Tier 3 — selective
+15,New Hampshire,2,1,2,0,0,0,0,Tier 3 — selective
+15,Ohio,2,1,2,0,0,0,0,Tier 3 — selective
+15,Oklahoma,2,1,0,0,0,2,0,Tier 3 — selective
+15,Rhode Island,2,1,2,0,0,0,0,Tier 3 — selective
+15,Vermont,2,1,2,0,0,0,0,Tier 3 — selective
+28,Iowa,1,1,0,0,0,1,0,Tier 3 — selective
+28,Maine,1,1,1,0,0,0,0,Tier 3 — selective
+28,Nebraska,1,1,0,0,0,1,0,Tier 3 — selective
+28,North Dakota,1,1,0,0,0,1,0,Tier 3 — selective
+28,Pennsylvania,1,1,0,0,1,0,0,Tier 3 — selective
+28,Tennessee,1,1,0,0,0,1,0,Tier 3 — selective
+28,West Virginia,1,1,0,0,0,1,0,Tier 3 — selective
+28,Wisconsin,1,1,0,0,0,1,0,Tier 3 — selective
+36,Alabama,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Alaska,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,DC,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Delaware,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Hawaii,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Idaho,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Indiana,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Kansas,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Michigan,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Mississippi,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Missouri,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Montana,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,New Mexico,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,South Carolina,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,South Dakota,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+36,Wyoming,0,0,0,0,0,0,0,Tier 4 — no enacted mandate
+"Per-cell points: green=2 (mandatory enacted), yellow=1 (qualified enacted), blank=0. Tiers: T1 ≥7 · T2 4-6 · T3 1-3 · T4 0. Use as the outreach priority order; combine with ACV/footprint signals when sequencing reps.",,,,,,,,,

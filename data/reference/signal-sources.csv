@@ -1,0 +1,24 @@
+Category,Signal / Source,What it tells us,FORGE Pillar(s),Where to find / how to access,Applies to (verticals),How to scrape / automate,Notes
+Gravity & Budget,Public school district budgets / ACFR / CIP,Org funds safety; capital available,Gravity / Budget,District websites; state DOE,K-12,Scrape district sites (Apify),Public record
+Gravity & Budget,School board agendas / minutes / video,Exec/board attention; approvals,Gravity,BoardDocs portals,K-12,Apify scrape BoardDocs,Open-meeting laws
+Gravity & Budget,School bond measures,Dedicated safety capital,Budget,County election / bond records,K-12,,
+Gravity & Budget,University trustees/regents minutes & budgets,Exec attention + funding,Gravity / Budget,Governance pages,Higher Ed,,
+Gravity & Budget,Clery Act Annual Security Report,Security posture + incidents + named leaders,Fit / Acute Need / EDM,Campus websites,Higher Ed,Scrape security pages,Names leadership
+Gravity & Budget,IRS Form 990 (nonprofits),"Finances, exec comp, priorities",Budget / Gravity,ProPublica Nonprofit Explorer,"Healthcare, Higher Ed",API/scrape,
+Gravity & Budget,MSRB EMMA bond official statements,Capital plans + risk factors,Budget / Acute Need,emma.msrb.org,"Gov, public hospitals, K-12, Higher Ed",,
+Gravity & Budget,Municipal budgets / council minutes / CIP,Funding + attention,Budget / Gravity,City/county sites,Government,,
+Gravity & Budget,Public-company 10-K risk factors,Names WPV/security as a risk,Acute Need / Gravity,SEC EDGAR,"Retail, Corporations",Parse EDGAR,Search 'workplace violence'
+Gravity & Budget,"Exec hire announcements (CSO, EM Director, WPV Coordinator)",New exec → mandate to act,Gravity / Acute Need,Press; LinkedIn,All,Scrape LinkedIn/news,Strong intent
+Contract Expiry,Government RFPs / bid solicitations,Active buying + incumbent stack,Acute Need / Event,"SAM.gov, GovSpend, BidNet, Periscope, Bonfire","Gov, K-12, Higher Ed, public hospitals",Scrape / GovSpend API,Public sector strong
+Contract Expiry,Contract award notices (vendor+term+start),Compute incumbent expiry,Acute Need / Event,Procurement portals,Public entities,,Term+start=expiry
+Contract Expiry,Board minutes approving contracts,Infer expiry from date + term,Acute Need,BoardDocs,"K-12, Higher Ed, Gov",,
+Contract Expiry,USASpending.gov,Federal contract terms,Acute Need / Event,usaspending.gov,Government (federal),API,
+Contract Expiry,Vendor press releases / case studies (dated win),Infer renewal window,Acute Need,Vendor sites; news,All,Scrape newsrooms,Private inference
+Disconnected Tools,Job postings listing systems,Current stack + active initiative,Fit / Competitor,"Indeed, LinkedIn Jobs, GovernmentJobs, HigherEdJobs",All,Apify job scrapers,Flag replace- vs integrate-layer
+Disconnected Tools,RFPs / bid docs (spec incumbents),Full stack + integration needs,Fit / Acute Need,Procurement portals,Public entities,Scrape,
+Disconnected Tools,Competitor followers / engagers,Intent on replace-layer surface,Acute Need / Competitor,"LinkedIn (CENTEGIX, Strongline, React Mobile...)",All,Apify LinkedIn scraper,Replace-layer = green flag
+Disconnected Tools,Vendor case studies / press releases,Known point-tool in use,Competitor / Fit,Vendor sites; news,All,,
+Disconnected Tools,GovSpend procurement history,Past security purchases,Competitor / Budget,GovSpend,Public entities,API/scrape,
+Building Recon,Satellite imagery / Places API,"Building count, footprint, # sites",Fit / ACV sizing,Google Maps/Places/Static Maps API,All,Automate footprint at scale,Confirms multi-building ICP
+Building Recon,Street View,"Entrances, parking, perimeter, ED entrance",One-off personalization / Fit,Google Street View,All,"Manual, top accounts",Frame as helping security
+Building Recon,Annotated campus image,One-off touch + digital-twin preview,EDM engagement,Maps + annotation,All (top accounts),,Reserve for top-scored

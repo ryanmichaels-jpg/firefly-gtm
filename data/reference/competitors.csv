@@ -1,0 +1,35 @@
+Competitor,What they are,Primary surface,Ember (Platform),Panic / Duress,Gunshot,Gateway / Hub,Vertical focus,Integration / Frenemy,Notes
+CENTEGIX (CrisisAlert),Wearable panic badge + own RF infra + alerting/mapping,Full-stack,Partial,Yes,—,Yes,"K-12, Healthcare, Corporate",No,Closest hardware analog; owns gateway network
+Navigate360,K-12 safety ecosystem (EM + wearable panic + visitor),Full-stack,Yes,Yes,—,—,K-12,No,'End fragmented panic buttons' pitch
+Verkada,"Cloud physical-security platform (cameras, access, alarms)",Full-stack,Partial,Yes,—,Partial,Broad,No,Closest broad-stack analog
+Motorola Solutions,Avigilon video + Rave + Noggin CEM + radios,Full-stack,Yes,Partial,Partial,—,Broad,No,Broad incumbent; owns notification + command center
+Securitas Healthcare (Strongline),Healthcare staff duress + RTLS,Full-stack (healthcare),Partial,Yes,—,Partial,Healthcare,No,Entrenched via clinical RTLS bundle
+Raptor Technologies,K-12 safety platform,Platform,Yes,Partial,—,—,K-12,No,
+CrisisGo,Mobile-first school safety & reunification,Platform,Yes,Partial,—,—,K-12,No,
+Everbridge,Critical event management / mass notification,Platform,Yes,—,—,—,Enterprise / Gov,No,
+Rave Mobile Safety (Motorola),Mass notification + Rave Panic Button,Platform,Yes,Partial,—,—,Gov / Edu,No,
+Alertus,Mass notification + panic + active shooter,Platform,Yes,Yes,—,—,Broad,No,
+Omnilert,Emergency notification + AI gun detection,Platform,Yes,—,Yes,—,Edu / Corporate,No,
+AlertMedia / Regroup / AtHoc / Titan HST,Emergency communication platforms,Platform,Yes,—,—,—,Enterprise,No,
+Status Solutions (SARA),Situational awareness / alerting,Platform,Yes,Partial,—,—,Senior living / Healthcare,No,
+Genetec (Mission Control),PSIM / GSOC over third-party hardware,Platform,Partial,—,—,—,Broad,Frenemy (integrate cameras),Integrate-layer for cameras/access
+HiveWatch / Resolver / Ontic / Immix / SureView,GSOC / incident / PSIM software,Platform,Yes,—,—,—,Corporate,No,
+Singlewire (InformaCast),Mass notification + wearable alert badge,Platform,Partial,Partial,—,—,Edu / Healthcare,Frenemy (integration partner),Firefly integrates via API
+React Mobile,Hospitality panic (devices + beacons/gateways),Hardware (panic),—,Yes,—,Yes,Hospitality,No,
+ROAR for Good / AppArmor,Wearable panic (hospitality + campus),Hardware (panic),—,Yes,—,—,Hospitality / Campus,No,
+Relay (Relay Pro),Hospitality cellular panic devices,Hardware (panic),—,Yes,—,—,Hospitality,No,Cellular; no gateway
+911Cellular,Panic buttons + alerting,Hardware (panic),Partial,Yes,—,—,Schools / Healthcare,No,
+Inovonics,Wireless duress infrastructure + sensors,Hardware (panic),—,Yes,—,Yes,Healthcare / Commercial,No,
+RF Technologies / CenTrak / Litum / Midmark,Healthcare RTLS staff duress (+ infant/wander),Hardware (panic),—,Yes,—,Partial,Healthcare,No,Bundled with clinical RTLS
+Aiphone / BluePoint Alert,Fixed panic / pull stations,Hardware (panic),—,Yes,—,—,Schools / Commercial,No,
+AmberBox,Indoor acoustic + IR gunshot detection,Hardware (gunshot),—,—,Yes,—,Commercial / Edu,No,Most direct to Firefly gunshot sensor
+Shooter Detection Systems (Alarm.com),Indoor acoustic gunshot (Guardian),Hardware (gunshot),—,—,Yes,—,Commercial / Edu,No,
+EAGL,Gunshot detection system + server,Hardware (gunshot),—,—,Yes,—,Edu / Gov,No,
+HALO Smart Sensor (IPVideo/Motorola),"Multi-sensor: gunshot, vape, aggression",Hardware (gunshot),—,—,Yes,Partial,Edu,No,
+SoundThinking (ShotSpotter),Outdoor/city-scale acoustic gunshot,Hardware (gunshot),—,—,Yes,—,Cities / Gov,No,Outdoor focus
+ZeroEyes,Camera-based AI gun detection (visual),Hardware (gunshot/weapons),Partial,—,Yes,—,Broad,No,Different modality (visual)
+Evolv / CEIA / Xtract One,Weapons screening at entry,Hardware (weapons screening),—,—,Partial,—,Venues / Healthcare / Edu,No,Adjacent (entry screening)
+Exacq (ExacqVision) — Johnson Controls/Tyco,Video management system (VMS),Integrate-layer (VMS) — NOT a competitor,—,—,—,—,Broad,Integrate (camera feeds),Peer to Genetec/Milestone/Avigilon. Firefly ingests its cameras
+Milestone (XProtect),Open-platform VMS,Integrate-layer (VMS) — NOT a competitor,—,—,—,—,Broad,Integrate (camera feeds),Camera/VMS Firefly integrates with
+Avigilon (Motorola),VMS + cameras,Integrate-layer (VMS) — NOT a competitor,—,—,—,—,Broad,Integrate (camera feeds),Camera/VMS Firefly integrates with
+Genetec Omnicast / Synergis (camera & access side),VMS + access control,Integrate-layer — NOT a competitor,—,—,—,—,Broad,Integrate (cameras/access),Distinct from Mission Control platform row above

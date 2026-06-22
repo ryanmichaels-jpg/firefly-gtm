@@ -1,0 +1,88 @@
+Vertical,Jurisdiction,Law / Bill,Type,Requirement (short),Status,Effective / Deadline,Confidence,Source
+Federal,US — OSHA,OSH Act §5(a)(1) General Duty Clause,enforcement,Cites WPV as a 'recognized hazard' absent a standard,Enacted,In force,High,osha.gov/workplace-violence/enforcement
+Federal,US — OSHA,RIN 1218-AD08 (WPV in Healthcare/Social Assistance),federal-standard,Would mandate WPV programs for healthcare/social-assistance,Pending (Long-Term Action / sidelined),No NPRM,High,jjkeller.com
+Federal,US — Congress,H.R.2531 / S.1232 (119th),federal-bill,Directs OSHA to issue a WPV standard,Pending,Introduced 4/1/2025,High,congress.gov/bill/119th-congress/house-bill/2531
+Federal,US — Congress,H.R.3178 / S.1600 — Save Healthcare Workers (SAVE) Act,federal-bill (penalty),Federal crime to assault healthcare worker,Pending,Introduced 5/2025,High,congress.gov/bill/119th-congress/house-bill/3178
+Federal,US — CMS,CoP §482.13(c)(2) safe setting + §482.15 emergency prep; Memo QSO-23-04,accreditation/CoP,Safe-setting + emergency-prep; surveyors assess WPV via CoPs,Enacted,In force,High,cms.gov
+Accreditation,US — Joint Commission,WPV Prevention Standards (→ NPG),accreditation,"WPV program: leadership, team, reporting, worksite analysis, training",Enacted,2022; expanded 7/1/2025; NPG 1/1/2026,High,jointcommission.org
+Accreditation,US — DNV,NIAHO security management,accreditation,WPV within NIAHO security mgmt,Enacted,"Rev 25-1, 9/8/2025",Med,dnv.us
+Healthcare,California,8 CCR §3342 / Labor Code §6401.8 (SB1299),device+program+training,"Hospital WPV plan, hazard assessment, violent-incident log, alarm incl. personal alarm devices",Enacted,Log 4/1/2017; plan 4/1/2018,High,dir.ca.gov/title8/3342.html
+Healthcare,California,AB2975 (2024) → Labor Code §6401.9,device/staffing,Cal/OSHA to require weapons screening at hospital/ED/L&D entrances,Enacted (standard pending),Standard due 3/1/2027,High,leginfo.legislature.ca.gov
+Healthcare,Washington,RCW 49.19 (HB1162/SB5162 2025),program+training,"Each health-care setting: WPV plan, assessment, training, records",Enacted,Enhancement 1/1/2026,High,app.leg.wa.gov/rcw 49.19
+Healthcare,Oregon,ORS 654.412 (HB2022) + SB537 (2025),program+device,Assault-prevention program; SB537 adds ED silent alarms/panic buttons in design,Enacted,SB537 1/1/2026,High,olis.oregonlegislature.gov SB537
+Healthcare,Nevada,NRS 618.7311 (AB348); SB182 (2025),program+training,"Medical facilities 50+: safety committee, WPV plan, de-escalation training",Enacted,Reg 12/22/2021,High,dir.nv.gov
+Healthcare,Arizona,ARS §36-420.03 (SB1311),program+training,"Hospitals/ED/urgent care >50 employees: written WPV plan, training",Enacted,Plan by 7/1/2023,High,azleg.gov/ars/36/00420-03.htm
+Healthcare,Colorado,SB25-166,program,Hospital WPV plans + biannual reporting,Enacted,8/6/2025; reporting 7/1/2026,High,leg.colorado.gov/bills/sb25-166
+Healthcare,Utah,HB380 (2026),program (reporting),Hospital WPV incident reporting system + analysis,Enacted,5/6/2026,High,le.utah.gov HB0380
+Healthcare,Montana,HB590 (2023),program (reporting),Report violence vs healthcare employees via DOJ portal,Enacted,10/1/2023,High,app.doj.mt.gov/apps/HB590
+Healthcare,Illinois,Health Care Violence Prevention Act 210 ILCS 160; HB3435 (2025),program+training+device-assessment,"WPV program; HB3435 adds alarm/security assessment, reporting",Enacted,Base 1/1/2019; HB3435 1/1/2026,High,ilga.gov ActID=3906
+Healthcare,Ohio,HB452 (Healthcare Workplace Safety Act),program+staffing+training,Hospital WPV security plan; de-escalation-trained staff in ED & psych,Enacted,4/9/2025,High,legiscan.com/OH/text/HB452
+Healthcare,Minnesota,Minn. Stat. 144.566,program+training,"Hospitals: WPV plans, committee, hazard assessment, training, reporting",Enacted,Plans 2016; MDH submission 1/1/2025,High,revisor.mn.gov/statutes/cite/144.566
+Healthcare,New York,Ch.618/2025 (A203-B/S5294-B); Labor Law §27-b (public),program+staffing,"Hospitals & nursing homes: WPV programs, annual assessments; ED guard/LEO in counties >=1M",Enacted,~Sept 2026; assessments 1/1/2027,High,nysenate.gov S5294
+Healthcare,New Jersey,N.J.S.A. 26:2H-5.17 (Violence Prevention in Health Care Facilities Act),program+training,"Hospitals/nursing/psychiatric: WPV committees, programs, crisis response, signage",Enacted,In force,High,law.justia.com NJ 26:2H-5.20
+Healthcare,Connecticut,PA 11-175; PA 24-19; PA 26-12,program+training,"HC employers 50+: annual risk assessment, WPV plan, safety committee, DPH reporting",Enacted,Base 10/1/2011; PA26-12 10/1/2026,High,cga.ct.gov 2011PA-00175
+Healthcare,Rhode Island,Gen. Laws Ch. 23-17.28 (Hospital WPV Protection Act),program+training,"Hospitals: safety assessment, assault-prevention program, training, committee",Enacted,1/15/2022,High,law.justia.com RI 23-17.28
+Healthcare,New Hampshire,RSA 277-C; RSA 151-J; SB29 (2025),program+reporting,Hospitals/urgent care: WPV prevention programs + incident reporting,Enacted,SB29 8/9/2025,High,law.justia.com NH 277-C
+Healthcare,Vermont,"Act 9 (H.259, 2025)",program+reporting,Licensed hospitals: WPV security plan from risk assessment; reporting,Enacted,2025,High,legislature.vermont.gov H.259
+Healthcare,Maine,22 M.R.S. (hospital safety/security plan),program,Hospitals must adopt safety/security plan per DOL/OSHA guidelines,Enacted,In force,Med,themainemonitor.org
+Healthcare,Texas,"SB240 (88R, 2023) → Health & Safety Code Ch. 331",program,"WPV prevention committee, written policy + plan, post-incident response",Enacted,Compliance by 9/1/2024,High,statutes.capitol.texas.gov HS.331
+Healthcare,North Carolina,HB125 (SL 2023-129); GS §14-34.6,staffing+training+program+penalty,ED: >=1 LEO at all times; security risk assessment; WPV training; reporting,Enacted,10/1/2023,High,ncleg.gov H125
+Healthcare,Virginia,HB2269/SB1260 (2025) → Code §32.1-127; HB1489 (2026),program+training+reporting,"Hospitals: WPV reporting system, de-escalation training, prevention planning",Enacted,7/1/2025; VDH reporting 7/1/2026,High,littler.com VA WPV
+Healthcare,Kentucky,HB176 (2023); HB194 (2024),program+training+penalty,Health facilities: safety assessment + plan + training + reporting + audits,Enacted,Training 1/1/2024; audits 1/1/2025,High,healthlawadvisor.com KY
+Healthcare,Louisiana,R.S. 40:2199.11–.19 (Lynne Truxillo Act),program+penalty,"Licensed facilities: WPV plan, signage, reporting, anti-retaliation",Enacted,8/1/2022,High,ldh.la.gov Act461-2022
+Healthcare,Maryland,Davis Martinez Public Employee Safety & Health Act,program (public),MOSH WPV standard for public employees incl. public hospitals,Enacted (standard pending),Standard due 10/1/2026,High,labor.maryland.gov Davis_Martinez
+Healthcare,Penalty-only states (no program mandate),Various criminal-enhancement statutes,penalty,Assaulting a healthcare worker = felony/aggravated offense,Enacted,In force,High,roarforgood.com (by-state)
+Healthcare,NO HCW-specific enhancement,Montana; Wyoming (none of any kind); South Carolina (pending only),penalty (gap),Notable holdouts with no HCW-specific criminal enhancement,None-found,n/a,Med,wyomingpublicmedia.org
+Healthcare,Massachusetts,H.4767 / S.1718,program+training+penalty,"Risk assessments, WPV plans, training, reporting, paid leave",Pending (passed House 158-0),n/a,High,malegislature.gov H4767
+Healthcare,Pennsylvania,HB926 / SB709,program+training+penalty,"Health-facility WPV committees, programs, reporting, training",Pending (passed House 5/6/2025),n/a,High,legis.state.pa.us HB926
+Healthcare,Missouri,HB3401 / SB1775 / SB1719 (2026),program,Hospital WPV committees + prevention plan,Pending (likely dead at adjournment),n/a,High,house.mo.gov
+Healthcare,South Carolina,H.3480 / S.346 (Healthcare Workplace Security Act),penalty,Assault/battery on HCW or in a facility a felony,Pending,n/a,High,scstatehouse.gov 3480
+Healthcare,West Virginia,HB2146 / HB4237 (WPV Prevention for Health Care Act),program,"Written prevention plan per OSHA guidance; reintroduced, never enacted",Pending/Failed,n/a,Med,wvlegislature.gov HB2146
+K-12,Federal,Alyssa's Act H.R.6809; ALYSSA Act H.R.1524; STOP School Violence grants,panic-device/grant,Conditions/promotes silent panic alarm + mapping; grants fund tech,Pending / Enacted (grants),FY26 active,High,congress.gov HR6809
+K-12,New Jersey,A764 (P.L.2019 c.13),panic-device,">=1 silent panic alarm linked to law enforcement, all public K-12",Enacted,2/6/2019,High,nj.gov/governor
+K-12,Florida,SB70 (2020) 'Alyssa's Alert',panic+notification,Mobile panic alert coordinating real-time first-responder response,Enacted,2020; phased 2021-22,High,flsenate.gov 2020/70
+K-12,New York,S7132A/A1356A (2022),notification (permissive),Districts must CONSIDER silent panic alarms in safety plans,Enacted,6/23/2022,High,nysenate.gov S7132
+K-12,Texas,"SB838 (88R, 2023)",panic-device,"Silent panic alert tech in every classroom, linked to emergency services",Enacted,Compliance 2025-26 SY,High,capitol.texas.gov SB00838
+K-12,Tennessee,HB0322 / HB2528 (2023),notification/grant,Schools evaluate panic alert systems; safety-alert grant pilot,Enacted,2023,Med,wapp.capitol.tn.gov HB0322
+K-12,Utah,HB84 Sub5 (2024),panic-device,Wearable panic buttons for teachers in every classroom + entry control,Enacted,2024,High,le.utah.gov HB0084
+K-12,Oklahoma,SB1357 / HB4073 (2024),panic-device,Real-time panic/alert connection to law enforcement,Enacted,6/14/2024,Med,oklegislature.gov
+K-12,Georgia,HB268 'Ricky & Alyssa's Law' (2025); SB17 twin,panic-device+mapping,"Mobile panic alert AND digital facility mapping, annually verified; public+private",Enacted,Impl. by 7/1/2026,High,gov.georgia.gov hb-268
+K-12,Washington,"ESSB5004 (2025, Ch. 347)",notification (process),Districts build alert/panic-button response system w/ LE & PSAPs,Enacted,7/27/2025,High,app.leg.wa.gov 5004
+K-12,Oregon,HB3083 (2025),panic-device (permissive),Schools 50+ must CONSIDER panic alarm; ODE grant,Enacted,1/1/2026,High,olis.oregonlegislature.gov HB3083
+K-12,Virginia,"HB592 (2026, Ch. 45)",panic-device (permissive),PERMITS boards to give staff wearable panic alarms (911 + alert),Enacted,7/1/2026,High,lis.virginia.gov HB592
+K-12,West Virginia,HB4798 (2026),panic-device (contingent),Enables wearable panic alert; funding-contingent; sunsets 2029,Enacted,Rulemaking by 12/31/2026,High,legiscan.com WV HB4798
+K-12,Louisiana,Act 334 / SB207 (2023),panic+notification,Each board implements statewide panic emergency notification system,Enacted,District impl 4/1/2024,High,legis.la.gov 23RS SB207
+K-12,Arkansas,Ark. Code §6-15-1302 (School Safety Act),panic+mapping,Panic-button app to LE; Smart911 floor plans,Enacted,By 10/1/2021 (if funded),High,law.justia.com AR 6-15-1302
+K-12 (mapping),MD / NC / IN / WI / ND,HB472; GS115C-105.53; IC10-21-1-10; Act109; HB123,EOP-mapping,Digital facility maps / floor plans shared with responders,Enacted,Varies,High,legiscan / state codes
+K-12,Illinois,HB5107 (104th GA) 'Alyssa's Law',panic-device (consider),Schools must consider mobile panic alert; ISP rules + grant,"Pending (near-final, unsigned)",TBD,High,ilga.gov HB5107
+K-12,Pending (live),SC H.3258; PA HB634; MI SB76; OH SB105/HB106; MA H.741; MN HF4571; CA AB2816/598; KS HB1328; AZ HB2592(enacted permissive),panic-device,Alyssa's-type panic/mapping bills in progress,Pending,Varies,High,legiscan (by state)
+K-12,Dead this cycle,AL HB234; MS HB1373; MO SB1733; KY HB643; ME LD808,panic-device,Alyssa's-type bills failed at sine die,Dead,n/a,High,legiscan (by state)
+K-12,Correction,Ohio,panic-device,"'Wearable panic alert 2025-26' is FALSE — SB105/HB106 pending, not enacted",Pending (NOT enacted),n/a,High,legislature.ohio.gov SB105
+Higher Ed,Federal,Clery Act 20 U.S.C. §1092(f); HEOA 2008; EAGLES Act (pending),notification/campus-police,"Annual security report, timely warnings, immediate emergency notification",Enacted,1990; 2008,High,rems.ed.gov
+Higher Ed,Virginia,Va. Code §23.1-803/804/805,notification+EOP+threat-assessment,Emergency broadcast system; crisis plan; threat-assessment team,Enacted,Post-VA Tech,High,law.lis.virginia.gov 23.1-803
+Higher Ed,Illinois,Campus Security Enhancement Act 2008 (110 ILCS 12),EOP+threat-assessment,All-hazards plan + violence-prevention plan; annual training,Enacted,2008,High,ilga.gov ActID=1054
+Higher Ed,Connecticut,Conn. Gen. Stat. §10a-156a (PA 13-3),EOP+threat-assessment,Security protocol plan filed w/ DESPP; threat-assessment team,Enacted,2013/2014,High,cga.ct.gov chap_185b
+Higher Ed,Texas,Tex. Educ. Code §51.217/.218,EOP+notification,Multihazard EOP + emergency alert system,Enacted,2011/2019,High,texas.public.law 51.217
+Higher Ed,Florida,Fla. Stat. §1006.601 (2026),EOP+notification,"Active-assailant plans, campus-wide alert, reunification, risk assessments",Enacted,5/15/2026,High,flsenate.gov 2026/757
+Higher Ed,CA / NJ / NY / PA / CO / OH,Educ./statutory campus-safety provisions,notification/EOP/grant,"State campus-safety, notification, threat, or grant requirements",Enacted,Varies,High,state codes
+Higher Ed,Campus police statutes,NC Ch.74G; MI; MA c.22C §63; GA O.C.G.A. §20-3-72,campus-police (permissive),Authorize/cert. campus police with arrest powers,Enacted,Varies,High,state codes
+Hospitality,AHLA / Brands,"5-Star Promise; Marriott, Hilton, Hyatt, IHG, Wyndham; MGM/Caesars CBA",brand-mandate (private),Employee safety devices for hotel staff (voluntary/contractual),Active (committed),2018; targets 2020,Med,ahla.com/5-star
+Hospitality,New Jersey,S2986 / P.L.2019 c.123,device-mandate,Hotels >100 rooms: free panic device to lone-room workers,Enacted,1/1/2020,High,pub.njleg.gov PL19/123
+Hospitality,Illinois,"Hotel & Casino Employee Safety Act, 820 ILCS 325",device-mandate,All hotels/casinos: free panic button for lone-room workers,Enacted,7/1/2020,High,law.justia.com 820 ILCS 325
+Hospitality,Washington,RCW 49.60.515 (SB5258; HB1524),device-mandate,Isolated employees (housekeepers) get panic button,Enacted,2020/2021; HB1524 1/1/2026,High,app.leg.wa.gov 49.60.515
+Hospitality,Cities (enacted),NYC Safe Hotels Act (LL104/2024); Chicago; Seattle; Miami Beach; LA City; LA County; Long Beach; Santa Monica; West Hollywood; Oakland; Sacramento City+County; Glendale; Anaheim; Irvine,device-mandate,Municipal hotel panic-button/safety-device ordinances,Enacted,NYC 5/3/2025; others vary,High,municipal codes
+Hospitality,Pending,PA SB976; VA HB967 (150+ rooms); MA H.1657 (25+ rooms); HI SB1256; Boston Docket 2024-0759,device-mandate,Statewide/city hotel panic-button bills,Pending,n/a,High/Med,legislature sites
+Hospitality,Correction,Philadelphia 'hotel panic ordinance',device-mandate,Widely cited online; NO primary phila.gov ordinance located — likely erroneous,None-found / likely-erroneous,n/a,Low,roarforgood.com
+Retail,Federal,OSHA GDC; Pub. 3153 (late-night retail guidance),enforcement/guidance,No retail standard; voluntary late-night guidance,Enacted (tool) / guidance,In force,High,osha.gov
+Retail,New York,Retail Worker Safety Act L.2024 c.308 (amended 2025); Labor Law §27-e,program+training+device,Retailers 10+: WPV policy + training; 500+ employees: silent response button,Enacted,Policy 6/2/2025; button 1/1/2027,High,dol.ny.gov retail-wpv
+Retail,California,SB553 → Labor Code §6401.9,program+training,"General-industry WVP plan, log, training; covers retail",Enacted,7/1/2024,High,dir.ca.gov general-industry
+Retail,Washington,HB1524 (2025) → RCW 49.60.515,device+lone-worker,Isolated workers (incl. retail): carry-able panic button; training,Enacted,1/1/2026,High,wa-law.org HB1524
+Retail,Florida,Convenience Business Security Act §§812.171–.175,late-night+device+training,"Convenience stores 11pm-5am: silent alarm, cameras, drop safe, lighting, training",Enacted,Since 1990,High,flsenate.gov Ch.812
+Retail,Louisiana,HB1238 / Act 342 (2026) 'Behind the Counter Protection Act',penalty,Enhanced penalties for assault on retail/food-service employees,Enacted,8/1/2026,High,ogletree.com LA
+Retail,Pending / dead / vetoed,"NJ A4419 (pending, 30+ emp — NOT enacted); MN HF3528 (dead); LA SB223 (failed); VA HB1919 (VETOED 3/2025); AR HB1159 (dead)",program/device,Retail WPV bills not in force,Pending/Dead/Vetoed,n/a,High,legiscan (by state)
+General-industry,California,SB553 → Labor Code §6401.9,general-WPV-program,"ONLY enacted all-employer WPV mandate: plan, log, annual training",Enacted,7/1/2024; standard by 12/31/2026,High,dir.ca.gov general-industry
+General-industry,New York,Labor Law §27-b,public-employer,"Public employers 20+: WPV prevention program, risk eval, training",Enacted,In force,High,law.justia.com NY LAB 27-b
+General-industry,Maryland,Davis Martinez Act (HB176 2025),public-employer,MOSH public-sector WPV standard,Enacted (standard pending),Standard due 10/1/2026,High,labor.maryland.gov
+General-industry,Washington,HB1524 (2025),lone-worker,Isolated employees across hotels/retail/security/property services: panic button,Enacted,1/1/2026,High,app.leg.wa.gov 49.60.515
+General-industry,Virginia,HB1919 (2025),general-WPV-program,Would require 100+ employers to maintain WPV policy,Vetoed (3/24/2025),n/a,High,jdsupra.com VA veto
+General-industry,New Jersey,A4419,general-WPV-program (retail),Retail WPV plans/training + panic (30+ employees),Pending (NOT enacted),n/a,Low-needs-check,legiscan NJ A4419
