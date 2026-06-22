@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+"""dashboard/build-data.py — convert data/mart/tam_scored.csv to a
+PII-redacted JSON the static dashboard reads.
+
+Run:
+    python3 dashboard/build-data.py
+
+Writes:
+    dashboard/data.json   — embedded in dashboard/index.html at build time
+
+Redactions:
+  - edm_seed_name → dropped (PII per CLAUDE.md)
+  - edm_seed_phone → dropped (PII)
+  - edm_seed_title → kept (functional / public role info)
+  - everything else from the scored mart is passed through
+"""
+from __future__ import annotations
+import csv
+import json
+import re
+from datetime import date
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / 'data' / 'mart' / 'tam_scored.csv'
+REF_MANDATES = ROOT / 'data' / 'reference' / 'mandates.csv'
+OUT = ROOT / 'dashboard' / 'data.json'
+
+PII_FIELDS = {'edm_seed_name', 'edm_seed_phone'}
+
+def _int(v):
+    try:
+        return int(v) if v not in (None, '', 'None') else None
+    except (TypeError, ValueError):
+        return None
+
+def _truthy(v) -> bool:
+    return str(v).strip().lower() in ('true', '1', 'yes', 'y')
+
+def sub_segment(htype: str, has_ed: bool, beds: int | None) -> str:
+    """Derived from hospital_type + ED + bed count."""
+    if 'critical access' in htype.lower():
+        return 'Community / Critical Access'
+    if 'psychiatric' in htype.lower():
+        return 'Psychiatric'
+    if "childrens" in htype.lower() or "children" in htype.lower():
+        return "Pediatric Specialty"
+    if beds and beds >= 500 and has_ed:
+        return 'Academic / Trauma'
+    if beds and beds >= 200 and has_ed:
+        return 'Regional Acute'
+    return 'Acute Care'
+
+def days_to_deadline(effective_date: str | None) -> int | None:
+    if not effective_date:
+        return None
+    try:
+        d = date.fromisoformat(effective_date)
+        delta = (d - date.today()).days
+        return delta
+    except ValueError:
+        return None
+
+def main():
+    rows = []
+    with open(SRC, encoding='utf-8') as f:
+        for r in csv.DictReader(f):
+            beds = _int(r.get('beds'))
+            has_ed = _truthy(r.get('has_ED'))
+            has_bh = _truthy(r.get('has_behavioral_unit'))
+            tier_num = _int(r.get('facility_tier')) or 3
+            forge_total = _int(r.get('forge_total')) or 0
+            # collapse Tier-A/B/C/X into a sortable enrichment letter
+            forge_tier = (r.get('forge_tier') or 'X').strip()
+            acute = _int(r.get('acute_need')) or 0
+            event = _int(r.get('event')) or 0
+            gravity = _int(r.get('gravity')) or 0
+            eff = (r.get('effective_date') or '').strip() or None
+            days = days_to_deadline(eff)
+            mandate_status = (r.get('mandate_status') or '').strip()
+            # display status: Upcoming → Upcoming, In force → In force,
+            # surface "Enforcement" if In force AND it's been ≥ 6 months
+            display_status = mandate_status
+            try:
+                if mandate_status == 'In force' and eff:
+                    months_since = (date.today() - date.fromisoformat(eff)).days / 30.4
+                    if months_since >= 6:
+                        display_status = 'Enforcement'
+            except ValueError:
+                pass
+            row = {
+                'id': r['ccn'],
+                'ccn': r['ccn'],
+                'name': r.get('facility_name', '').strip(),
+                'system': r.get('parent_system') or 'Independent facility',
+                'city': r.get('city', '').strip(),
+                'state': r.get('state', '').strip(),
+                'lat': float(r['lat']) if r.get('lat') else None,
+                'lng': float(r['lng']) if r.get('lng') else None,
+                'beds': beds,
+                'has_ED': has_ed,
+                'has_behavioral_unit': has_bh,
+                'sub_segment': sub_segment(r.get('hospital_type', ''), has_ed, beds),
+                'tier_num': tier_num,
+                'forge_total': forge_total,
+                'forge_acute_need': acute,
+                'forge_event': event,
+                'forge_gravity': gravity,
+                'forge_tier': forge_tier,
+                'enrichment_tier': r.get('enrichment_tier', 'A'),
+                'mandate_name': (r.get('mandate_name') or '').strip(),
+                'mandate_status': mandate_status,
+                'mandate_status_display': display_status,
+                'mandate_scope': (r.get('mandate_scope') or '').strip(),
+                'effective_date': eff,
+                'days_to_deadline': days,
+                'edm_title': (r.get('edm_seed_title') or '').strip() or None,
+                'is_qso_candidate': _truthy(r.get('is_qso_candidate')),
+                'forge_rationale': (r.get('forge_rationale') or '').strip(),
+                'acute_need_evidence': (r.get('acute_need_evidence') or '').strip(),
+                'event_evidence': (r.get('event_evidence') or '').strip(),
+                'gravity_evidence': (r.get('gravity_evidence') or '').strip(),
+                'needs_review': _truthy(r.get('needs_review')),
+                # Tier-B/C fields we don't have yet
+                'incumbent_vendor': None,
+                'contract_expiry': None,
+                # one-off draft path for QSOs
+                'one_off_brief': None,
+            }
+            rows.append(row)
+
+    # link QSO briefs
+    qso_brief_paths = {
+        '500064': '../documents/qso-briefs/qso-1-harborview.md',
+        '310009': '../documents/qso-briefs/qso-2-clara-maass.md',
+        '330101': '../documents/qso-briefs/qso-3-nyp.md',
+        '450046': '../documents/qso-briefs/qso-4-christus-spohn.md',
+        '190064': '../documents/qso-briefs/qso-5-our-lady-of-the-lake.md',
+    }
+    for row in rows:
+        if row['ccn'] in qso_brief_paths:
+            row['one_off_brief'] = qso_brief_paths[row['ccn']]
+
+    # quick metadata + per-state mandate (from primary mandate per state)
+    state_mandate: dict[str, dict] = {}
+    for r in rows:
+        st = r['state']
+        if not st: continue
+        if st not in state_mandate and r['mandate_name']:
+            state_mandate[st] = {
+                'name': r['mandate_name'],
+                'status': r['mandate_status_display'],
+                'effective_date': r['effective_date'],
+                'days_to_deadline': r['days_to_deadline'],
+            }
+
+    # funnel computed from actual data
+    total = len(rows)
+    scored = sum(1 for r in rows if r['forge_total'] > 0)
+    qso = sum(1 for r in rows if r['is_qso_candidate'])
+    # "engaged" proxy: Tier-A (forge_tier='A'); pipeline value heuristic
+    engaged = sum(1 for r in rows if r['forge_tier'] == 'A')
+
+    out = {
+        'rows': rows,
+        'metadata': {
+            'total': total,
+            'scored': scored,
+            'engaged': engaged,
+            'qualified': qso,
+            'states': sorted(set(r['state'] for r in rows if r['state'])),
+            'state_mandate': state_mandate,
+            'generated_at': date.today().isoformat(),
+            'source': 'data/mart/tam_scored.csv',
+        }
+    }
+    OUT.write_text(json.dumps(out, separators=(',', ':')))
+    print(f'wrote {OUT.relative_to(ROOT)}  ({OUT.stat().st_size:,} bytes, {total} rows)')
+    print(f'  tier A: {sum(1 for r in rows if r["forge_tier"]=="A")}')
+    print(f'  tier B: {sum(1 for r in rows if r["forge_tier"]=="B")}')
+    print(f'  tier C: {sum(1 for r in rows if r["forge_tier"]=="C")}')
+    print(f'  tier X: {sum(1 for r in rows if r["forge_tier"]=="X")}')
+    print(f'  QSOs: {qso}')
+    print(f'  geocoded: {sum(1 for r in rows if r["lat"])}/{total}')
+
+if __name__ == '__main__':
+    main()

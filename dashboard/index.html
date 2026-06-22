@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firefly Revenue Intel — GTM Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #100f0c; color: #f5f1e8; font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  ::placeholder { color: #6b675c; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: #2e2a22; border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  button, select, input { font-family: inherit; }
+  a { color: inherit; text-decoration: none; }
+
+  /* keyframes */
+  @keyframes ffpulse { 0% { transform: scale(0.7); opacity: 0.5; } 70% { transform: scale(2.8); opacity: 0; } 100% { opacity: 0; } }
+  @keyframes ffslide { from { transform: translateX(46px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* hover states */
+  .ffrow { cursor: pointer; }
+  .ffrow:hover { background: #1d1a13 !important; }
+  .ffnav { cursor: pointer; transition: color .15s; }
+  .ffnav:hover { color: #f5f1e8 !important; }
+  .ffchip { cursor: pointer; transition: border-color .15s; }
+  .ffchip:hover { border-color: #4a4334 !important; }
+  .fflink:hover { color: #f6a429 !important; }
+  .ffseg:hover { color: #d8d2c4 !important; }
+  .ffmode { cursor: pointer; transition: color .15s; }
+  .ffmode:hover { color: #d8d2c4 !important; }
+  .ffcard:hover { border-color: #4a4334 !important; background: #1c1810 !important; }
+
+  /* layout */
+  .app { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+  .sidebar { width: 258px; flex: none; background: #161309; border-right: 1px solid #211d15; display: flex; flex-direction: column; min-height: 0; }
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+
+  /* sidebar: window row */
+  .sb-window { height: 48px; flex: none; display: flex; align-items: center; gap: 9px; padding: 0 16px; }
+  .sb-window .dots { display: flex; gap: 8px; }
+  .sb-window .dot { width: 11px; height: 11px; border-radius: 50%; background: #343026; }
+  .sb-window .logo { position: relative; width: 17px; height: 17px; }
+  .sb-window .logo::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #f6a429; box-shadow: 0 0 12px 2px rgba(246,164,41,0.55); }
+  .sb-window .logo::after { content: ''; position: absolute; inset: 6px; border-radius: 50%; background: #ffd99a; }
+  .sb-window .brand { font-size: 12px; font-weight: 800; letter-spacing: 0.18em; color: #e9e4d8; }
+
+  /* mode tabs */
+  .modetabs { padding: 2px 12px 12px; flex: none; }
+  .modetabs > div { display: flex; gap: 3px; background: #19160e; border: 1px solid #241f17; border-radius: 11px; padding: 3px; }
+  .modetab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 0; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; color: #8a8273; background: transparent; transition: color .15s; border: none; }
+  .modetab.active { color: #f5f1e8; background: #2c2718; }
+
+  /* nav */
+  .nav-section { padding: 0 12px; display: flex; flex-direction: column; gap: 3px; }
+  .nav-header { padding: 16px 16px 8px; font-size: 9px; letter-spacing: 0.16em; color: #5f5a4e; font-weight: 700; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 9px; font-size: 13.5px; font-weight: 600; cursor: pointer; color: #8a8273; transition: color .15s; }
+  .nav-item.active { color: #f5f1e8; background: #221d12; }
+  .nav-item .badge { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 1px 6px; font-family: 'JetBrains Mono', monospace; }
+  .nav-item .badge.qso { color: #f6a429; background: rgba(246,164,41,0.12); }
+  .nav-item .badge.tam { color: #8a8273; background: #221f18; }
+  .nav-item .badge.alert { color: #ff6b5e; background: rgba(255,107,94,0.12); }
+  .nav-item .badge.art { color: #5fd08a; background: rgba(95,208,138,0.12); }
+  .nav-item svg { flex: none; }
+
+  .sb-pipe { margin: 14px 14px 6px; height: 1px; background: #221f18; }
+  .sb-stat { padding: 2px 18px 10px; }
+  .sb-stat .label { font-size: 9px; letter-spacing: 0.14em; color: #5f5a4e; font-weight: 700; margin-bottom: 8px; }
+  .sb-stat .row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 3.5px 0; }
+  .sb-stat .row span:first-child { color: #8a8273; }
+  .sb-stat .row span:last-child { color: #cfc8b8; font-family: 'JetBrains Mono', monospace; }
+  .sb-stat .row.hilite span:last-child { color: #f6a429; font-weight: 700; }
+
+  /* profile */
+  .profile { flex: none; border-top: 1px solid #211d15; padding: 11px 14px; display: flex; align-items: center; gap: 10px; }
+  .profile .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #f6a429, #c2641a); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #1a1000; flex: none; }
+  .profile .name { font-size: 12.5px; font-weight: 600; color: #e9e4d8; }
+  .profile .role { font-size: 10px; color: #7d7565; }
+  .profile .live { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; background: rgba(95,208,138,0.08); border: 1px solid rgba(95,208,138,0.22); border-radius: 7px; }
+  .profile .live .dot { width: 6px; height: 6px; border-radius: 50%; background: #5fd08a; box-shadow: 0 0 7px #5fd08a; }
+  .profile .live span { font-size: 9px; color: #9fe0ba; font-family: 'JetBrains Mono', monospace; }
+
+  /* main panes */
+  .segstrip { height: 42px; flex: none; border-bottom: 1px solid #1c1912; display: flex; align-items: center; gap: 14px; padding: 0 22px; background: #121009; }
+  .segstrip .head { font-size: 9.5px; letter-spacing: 0.16em; color: #5f5a4e; font-weight: 700; }
+  .segchip { display: flex; align-items: center; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 7px; cursor: pointer; color: #7d7565; }
+  .segchip.active { color: #f5f1e8; background: #241d12; border: 1px solid #3a2f1a; padding: 4px 11px; }
+  .segchip.soon { color: #6f6a5c; opacity: 0.5; cursor: default; }
+  .segchip .tag { color: #5fd08a; font-size: 9px; margin-left: 4px; }
+  .seg-meta { font-size: 10.5px; color: #6f6a5c; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
+
+  .topbar { height: 54px; flex: none; border-bottom: 1px solid #221f18; display: flex; align-items: center; gap: 16px; padding: 0 22px; background: #141209; }
+  .topbar .title { font-size: 15px; font-weight: 700; color: #f5f1e8; letter-spacing: -0.01em; }
+  .topbar .sub { font-size: 10.5px; color: #7d7565; font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
+  .search { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; background: #1b1810; border: 1px solid #2a261d; border-radius: 8px; width: 280px; flex: none; margin-left: auto; }
+  .search input { flex: 1; background: transparent; border: none; outline: none; color: #e9e4d8; font-size: 13px; }
+  .search svg { flex: none; }
+
+  .filterbar { flex: none; overflow: hidden; transition: height .2s; display: flex; align-items: center; gap: 10px; padding: 0 22px; background: #121009; }
+  .filterbar.active { height: 52px; border-bottom: 1px solid #1c1912; }
+  .filterbar.hidden { height: 0; padding-top: 0; padding-bottom: 0; }
+  .filterbar select { height: 30px; background: #1b1810; color: #cfc8b8; border: 1px solid #2a261d; border-radius: 7px; font-size: 12px; padding: 0 8px; outline: none; }
+  .filter-chip { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 7px; cursor: pointer; border: 1px solid #2a261d; background: #1b1810; color: #8a8273; transition: border-color .15s; }
+  .filter-chip.on { border-color: #3a2f1a; background: #241d12; color: #f6a429; }
+  .filter-meta { font-size: 11.5px; color: #9a927f; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
+
+  /* view stack */
+  .viewstack { flex: 1; position: relative; min-height: 0; min-width: 0; }
+  .view { position: absolute; inset: 0; display: none; }
+  .view.active { display: block; }
+  .view.scroll { overflow-y: auto; }
+
+  /* overview */
+  .overview { padding: 22px; display: flex; flex-direction: column; gap: 16px; max-width: 1280px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .kpi { background: #161309; border: 1px solid #221f18; border-radius: 12px; padding: 16px; }
+  .kpi.accent { background: linear-gradient(160deg, #1f1608, #161309); border-color: rgba(246,164,41,0.3); }
+  .kpi .label { font-size: 10px; letter-spacing: 0.1em; color: #7d7565; font-weight: 700; }
+  .kpi.accent .label { color: #c79a52; }
+  .kpi .value { font-size: 30px; font-weight: 800; color: #f0ebdf; font-family: 'JetBrains Mono', monospace; margin-top: 7px; }
+  .kpi.accent .value { color: #f6a429; }
+  .kpi .note { font-size: 11px; color: #7d7565; margin-top: 2px; }
+  .kpi .note.up { color: #5fd08a; }
+  .kpi .note.alert { color: #ff8a7e; }
+  .kpi-inline { display: flex; align-items: baseline; gap: 9px; margin-top: 7px; }
+
+  .panel { background: #141209; border: 1px solid #221f18; border-radius: 12px; }
+  .panel .head { padding: 13px 14px 8px; font-size: 11px; letter-spacing: 0.1em; color: #7d7565; font-weight: 700; }
+  .panel-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+
+  .funnel { display: flex; align-items: stretch; gap: 10px; padding: 18px 20px; background: #141209; border: 1px solid #221f18; border-radius: 12px; }
+  .funnel-step { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .funnel-bar { width: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 800; color: #f5f1e8; }
+  .funnel-bar.qual { background: linear-gradient(160deg, #f6a429, #c2641a); color: #1a1000; }
+  .funnel-step .name { font-size: 11px; color: #a39c8c; font-weight: 600; margin-top: 8px; }
+  .funnel-step .note { font-size: 10px; color: #6f6a5c; margin-top: 1px; }
+
+  /* tables */
+  .table-shell { margin: 6px 22px 22px; border: 1px solid #221f18; border-radius: 12px; background: #141209; overflow: hidden; }
+  .table-scroll { overflow-x: auto; }
+  .table-inner { min-width: 1080px; }
+  .table-head { display: grid; gap: 0; padding: 11px 14px; background: #1a1710; border-bottom: 1px solid #221f18; font-size: 9.5px; letter-spacing: 0.08em; color: #7d7565; font-weight: 700; }
+  .table-head .col { white-space: nowrap; }
+  .table-head .col.sort { cursor: pointer; transition: color .15s; }
+  .table-head .col.sort:hover { color: #c79a52; }
+  .table-head .col.sort.active { color: #c79a52; }
+  .table-row { display: grid; gap: 0; padding: 12px 14px; border-bottom: 1px solid #1c1912; align-items: center; }
+  .cell { min-width: 0; padding-right: 10px; }
+  .cell.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell .name { font-size: 13px; font-weight: 600; color: #f0ebdf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell .sub { font-size: 10.5px; color: #7d7565; }
+  .cell .city { font-size: 12px; color: #cfc8b8; }
+  .cell .state { font-size: 10px; color: #7d7565; font-family: 'JetBrains Mono', monospace; }
+  .cell.mono { font-size: 12.5px; color: #cfc8b8; font-family: 'JetBrains Mono', monospace; }
+  .cell.muted { font-size: 11.5px; color: #a39c8c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell.italic { color: #6f6a5c; font-style: italic; }
+
+  .forge-cell { display: flex; align-items: center; gap: 8px; padding-right: 12px; }
+  .forge-bar { flex: 1; height: 6px; background: #241f16; border-radius: 4px; overflow: hidden; }
+  .forge-bar > div { height: 100%; background: linear-gradient(90deg, #c2641a, #f6a429); border-radius: 4px; }
+  .forge-num { font-size: 12px; font-weight: 700; color: #f6a429; font-family: 'JetBrains Mono', monospace; }
+
+  /* mandate pill */
+  .mandate { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 7px; white-space: nowrap; }
+  .mandate.upcoming { color: #f6a429; background: rgba(246,164,41,0.12); border: 1px solid rgba(246,164,41,0.3); }
+  .mandate.inforce { color: #5fd08a; background: rgba(95,208,138,0.12); border: 1px solid rgba(95,208,138,0.3); }
+  .mandate.enforcement { color: #ff6b5e; background: rgba(255,107,94,0.12); border: 1px solid rgba(255,107,94,0.3); }
+  .mandate.none { color: #9a927f; background: rgba(154,146,127,0.1); border: 1px solid rgba(154,146,127,0.25); }
+
+  /* tier badge */
+  .tier-badge { display: inline-flex; font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 7px; white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+  .tier-A { color: #f6a429; background: rgba(246,164,41,0.12); border: 1px solid rgba(246,164,41,0.3); }
+  .tier-B { color: #5bb8d4; background: rgba(91,184,212,0.12); border: 1px solid rgba(91,184,212,0.3); }
+  .tier-C { color: #5fd08a; background: rgba(95,208,138,0.12); border: 1px solid rgba(95,208,138,0.3); }
+  .tier-X { color: #6f6a5c; background: rgba(111,106,92,0.1); border: 1px solid rgba(111,106,92,0.25); }
+
+  /* map */
+  .mapbox { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 70% at 50% 40%, #16140d 0%, #100f0c 72%); }
+  .mapbox svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .map-tip { position: absolute; pointer-events: none; opacity: 0; transform: translate(-50%, -130%); background: #211e15; border: 1px solid #34301f; border-radius: 7px; padding: 7px 10px; font-size: 11px; color: #f5f1e8; white-space: nowrap; z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,0.5); transition: opacity .1s; font-family: 'JetBrains Mono', monospace; }
+  .map-card { position: absolute; background: rgba(20,18,11,0.82); backdrop-filter: blur(8px); border: 1px solid #2a261d; border-radius: 10px; z-index: 20; }
+  .map-card.tl { left: 18px; top: 16px; padding: 8px 12px; display: flex; align-items: center; gap: 9px; font-size: 11px; border-radius: 9px; }
+  .map-card.tl .num { color: #f6a429; font-family: 'JetBrains Mono', monospace; }
+  .map-card.bl { left: 18px; bottom: 18px; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; }
+  .map-card.bl .hdr { font-size: 9.5px; letter-spacing: 0.16em; color: #7d7565; font-weight: 700; margin-bottom: 1px; }
+  .map-card.bl .row { display: flex; align-items: center; gap: 9px; font-size: 11.5px; color: #cfc8b8; }
+  .map-card.bl .sep { height: 1px; background: #2a261d; margin: 2px 0; }
+  .map-card.bl .dot1 { width: 13px; height: 13px; border-radius: 50%; border: 2px solid #fff; background: #f6a429; box-shadow: 0 0 9px rgba(246,164,41,0.8); flex: none; }
+  .map-card.bl .dot2 { width: 9px; height: 9px; border-radius: 50%; background: #ff5c4d; box-shadow: 0 0 8px rgba(255,92,77,0.7); flex: none; }
+  .map-card.bl .dot3 { width: 11px; height: 11px; border-radius: 50%; background: #ffcf6b; flex: none; }
+  .map-card.bl .dot4 { width: 9px; height: 9px; border-radius: 50%; background: #e0883a; flex: none; }
+  .map-card.bl .dot5 { width: 7px; height: 7px; border-radius: 50%; background: #9a7c52; flex: none; }
+  .map-zoom { right: 18px; bottom: 18px; display: flex; flex-direction: column; overflow: hidden; border-radius: 10px; }
+  .map-zoom-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #cfc8b8; border-bottom: 1px solid #2a261d; transition: background .15s; }
+  .map-zoom-btn:last-child { border-bottom: none; }
+  .map-zoom-btn:hover { background: #211e15; }
+
+  /* detail drawer */
+  .drawer-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 40; display: none; }
+  .drawer-mask.open { display: block; }
+  .drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 460px; background: #141209; border-left: 1px solid #2a261d; box-shadow: -10px 0 30px rgba(0,0,0,0.4); z-index: 41; transform: translateX(100%); transition: transform .32s cubic-bezier(0.2,0.7,0.2,1); overflow-y: auto; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { padding: 18px 20px 14px; border-bottom: 1px solid #221f18; display: flex; align-items: flex-start; gap: 12px; }
+  .drawer-close { width: 28px; height: 28px; border-radius: 7px; background: #1b1810; border: 1px solid #2a261d; color: #8a8273; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
+  .drawer h2 { font-size: 17px; font-weight: 700; color: #f5f1e8; line-height: 1.25; }
+  .drawer .sub { font-size: 11.5px; color: #7d7565; margin-top: 3px; }
+  .drawer .body { padding: 16px 20px 24px; }
+  .drawer .section { margin-bottom: 18px; }
+  .drawer .section-head { font-size: 9.5px; letter-spacing: 0.14em; color: #7d7565; font-weight: 700; margin-bottom: 8px; }
+  .drawer .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .drawer .chip { font-size: 11px; padding: 6px 10px; border-radius: 7px; background: #19160e; border: 1px solid #221f18; color: #cfc8b8; }
+  .drawer .chip.on { color: #9fe0ba; }
+  .drawer .stat-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; color: #cfc8b8; }
+  .drawer .stat-row span:first-child { color: #8a8273; }
+  .drawer .forge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .drawer .forge-row .lbl { width: 90px; font-size: 11px; color: #a39c8c; }
+  .drawer .forge-row .bar { flex: 1; height: 6px; background: #241f16; border-radius: 4px; overflow: hidden; }
+  .drawer .forge-row .bar > div { height: 100%; background: linear-gradient(90deg, #c2641a, #f6a429); border-radius: 4px; }
+  .drawer .forge-row .v { font-size: 11px; font-weight: 700; color: #f6a429; font-family: 'JetBrains Mono', monospace; width: 30px; text-align: right; }
+  .drawer .empty { font-size: 12px; color: #6f6a5c; font-style: italic; background: #161309; border: 1px dashed #2a261d; border-radius: 9px; padding: 11px 13px; }
+  .drawer .qso-cta { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; background: linear-gradient(135deg, #f6a429, #c2641a); border-radius: 9px; color: #1a1000; font-size: 12.5px; font-weight: 700; cursor: pointer; border: none; }
+
+  .empty-state { padding: 40px; text-align: center; color: #6f6a5c; font-size: 13px; }
+  .stub-pane { padding: 40px 22px; max-width: 600px; }
+  .stub-pane h3 { font-size: 16px; color: #f5f1e8; font-weight: 700; margin-bottom: 8px; }
+  .stub-pane p { font-size: 13px; color: #a39c8c; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sb-window">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div style="flex:1"></div>
+      <div class="logo"></div>
+      <span class="brand">FIREFLY</span>
+    </div>
+
+    <div class="modetabs">
+      <div>
+        <button class="modetab" data-mode="chat">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 3.3c0-.66.54-1.2 1.2-1.2h7.6c.66 0 1.2.54 1.2 1.2v4.9c0 .66-.54 1.2-1.2 1.2H6L3.4 11.7V9.4H3.2c-.66 0-1.2-.54-1.2-1.2V3.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+          Chat
+        </button>
+        <button class="modetab active" data-mode="cowork">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h6M2 7h10M2 10.5h7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Cowork
+        </button>
+        <button class="modetab" data-mode="code">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M5 3.8 2.3 7 5 10.2M9 3.8 11.7 7 9 10.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Code
+        </button>
+      </div>
+    </div>
+
+    <div class="nav-header">WORKSPACE</div>
+    <div class="nav-section">
+      <div class="nav-item" data-view="overview">
+        <svg width="16" height="16" viewBox="0 0 17 17" fill="none"><rect x="1.5" y="1.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/><rect x="1.5" y="9.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="1.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="9.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span style="flex:1">Overview</span>
+      </div>
+      <div class="nav-item" data-view="campaigns">
+        <svg width="16" height="16" viewBox="0 0 17 17" fill="none"><path d="M2 4.5h13M2 8.5h13M2 12.5h13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="5" cy="4.5" r="1.6" fill="#141209" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="8.5" r="1.6" fill="#141209" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="12.5" r="1.6" fill="#141209" stroke="currentColor" stroke-width="1.3"/></svg>
+        <span style="flex:1">Campaigns</span>
+        <span class="badge qso" id="badge-qso">5</span>
+      </div>
+      <div class="nav-item" data-view="map">
+        <svg width="16" height="16" viewBox="0 0 17 17" fill="none"><path d="M6 2.2 1.7 4v11l4.3-1.8 5 1.8 4.3-1.8V2.2L11 4 6 2.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 2.2V13.2M11 4v11" stroke="currentColor" stroke-width="1.4"/></svg>
+        <span style="flex:1">Map</span>
+      </div>
+      <div class="nav-item" data-view="accounts">
+        <svg width="16" height="16" viewBox="0 0 17 17" fill="none"><rect x="1.5" y="2.5" width="14" height="12" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 6.5h14M6.5 6.5v8" stroke="currentColor" stroke-width="1.3"/></svg>
+        <span style="flex:1">Accounts</span>
+        <span class="badge tam" id="badge-tam">—</span>
+      </div>
+      <div class="nav-item" style="opacity:0.55;cursor:default" title="Stub (Tier-B/news-feed work — deferred)">
+        <svg width="16" height="16" viewBox="0 0 17 17" fill="none"><path d="M8.5 1.6 10.5 6l4.4 0.3-3.4 2.9 1.1 4.4-4.1-2.5-4.1 2.5 1.1-4.4L2 6.3 6.5 6 8.5 1.6Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <span style="flex:1">Signals</span>
+        <span class="badge tam">—</span>
+      </div>
+      <div class="nav-item" style="opacity:0.55;cursor:default" title="Stub (no task system)">
+        <svg width="16" height="16" viewBox="0 0 17 17" fill="none"><path d="M3 4.2l1.4 1.4L7 3M3 9.2l1.4 1.4L7 8M9.5 4.5h4.5M9.5 9.5h4.5M9.5 13.5h4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span style="flex:1">Worklist</span>
+      </div>
+    </div>
+
+    <div class="sb-pipe"></div>
+    <div class="sb-stat">
+      <div class="label">PIPELINE THIS CYCLE</div>
+      <div class="row"><span>Tier A (priority)</span><span id="stat-a">—</span></div>
+      <div class="row hilite"><span>Qualified (★ QSO)</span><span id="stat-qso">—</span></div>
+      <div class="row"><span>Tier B</span><span id="stat-b">—</span></div>
+      <div class="row"><span>Tier C</span><span id="stat-c">—</span></div>
+    </div>
+
+    <div style="flex:1"></div>
+    <div class="profile">
+      <div class="avatar">RM</div>
+      <div style="flex:1;min-width:0">
+        <div class="name">Ryan Michaels</div>
+        <div class="role">Sales Engineering</div>
+      </div>
+      <div class="live"><div class="dot"></div><span>LIVE</span></div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+
+    <div class="segstrip">
+      <span class="head">SEGMENT</span>
+      <div style="display:flex; gap:6px">
+        <div class="segchip active">Healthcare<span class="tag">●</span></div>
+        <div class="segchip ffseg">Education</div>
+        <div class="segchip ffseg">Hospitality</div>
+        <div class="segchip ffseg">Retail</div>
+        <div class="segchip soon">Corporate <span class="tag" style="color:#6f6a5c">· coming online</span></div>
+      </div>
+      <span class="seg-meta" id="seg-meta">Cycle 04 · Q2 FY26 · synced just now</span>
+    </div>
+
+    <div class="topbar">
+      <div style="min-width:0">
+        <div class="title" id="view-title">Overview — Healthcare Cycle</div>
+        <div class="sub" id="view-sub">15 mandate states · warehouse synced just now</div>
+      </div>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.3" stroke="#7d7565" stroke-width="1.4"/><path d="M9.4 9.4 12.5 12.5" stroke="#7d7565" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input id="search-input" placeholder="Search facilities, systems, cities…">
+      </div>
+    </div>
+
+    <div class="filterbar hidden" id="filterbar">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex:none"><path d="M1 2.5h12L8.5 7.5v4l-3 1.5v-5.5L1 2.5Z" stroke="#8a8273" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      <select id="f-state"></select>
+      <div style="display:flex; gap:4px">
+        <div class="filter-chip on" data-tier="1">Tier 1</div>
+        <div class="filter-chip on" data-tier="2">Tier 2</div>
+        <div class="filter-chip on" data-tier="3">Tier 3</div>
+      </div>
+      <select id="f-mandate">
+        <option value="All">Mandate: all</option>
+        <option value="Upcoming">Upcoming</option>
+        <option value="In force">In force</option>
+        <option value="Enforcement">Enforcement</option>
+      </select>
+      <select id="f-beds">
+        <option value="0">Beds: any</option>
+        <option value="100">100+</option>
+        <option value="250">250+</option>
+        <option value="500">500+</option>
+      </select>
+      <div class="filter-chip" id="f-qso">★ QSO only</div>
+      <span class="filter-meta" id="filter-meta">—</span>
+      <div class="fflink" id="filter-clear" style="font-size:11.5px; color:#7d7565; cursor:pointer">Clear</div>
+    </div>
+
+    <div class="viewstack" id="viewstack">
+      <!-- views injected by JS -->
+      <div class="view scroll" data-view="overview"><div class="overview" id="view-overview"></div></div>
+      <div class="view scroll" data-view="campaigns"><div id="view-campaigns"></div></div>
+      <div class="view scroll" data-view="accounts"><div id="view-accounts"></div></div>
+      <div class="view" data-view="map" id="view-map"></div>
+      <div class="view" data-view="chat"><div class="stub-pane"><h3>Chat mode</h3><p>Decorative in the mockup — no chat backend wired. The runbook treats agents as <code>skills/</code> in this repo; spawning happens via Claude Code, not the dashboard.</p></div></div>
+      <div class="view" data-view="code"><div class="stub-pane"><h3>Code mode</h3><p>Decorative in the mockup — would show <code>firefly-gtm/</code> file tree + selected file. The real code lives in the repo at <code>~/Projects/firefly-gtm/</code>; reviewers can browse there directly.</p></div></div>
+    </div>
+  </main>
+</div>
+
+<!-- detail drawer -->
+<div class="drawer-mask" id="drawer-mask"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<script>
+// Embedded data — generated by dashboard/build-data.py
+let DATA = null;
+
+// state machine
+const state = {
+  mode: 'cowork',          // chat | cowork | code
+  view: 'overview',         // overview | campaigns | map | accounts
+  selected: null,           // ccn
+  search: '',
+  fState: 'All',
+  fT1: true, fT2: true, fT3: true,
+  fMandate: 'All',
+  fBeds: '0',
+  fQso: false,
+  sortKey: 'forge_total',
+  sortDir: -1,
+  _mapDrawn: false,
+};
+
+// helpers
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const fmt = n => n == null ? '—' : n.toLocaleString();
+const pct = (n, d) => d ? Math.round(100 * n / d) + '%' : '0%';
+
+const TIER_COLOR = { 1: '#ffcf6b', 2: '#e0883a', 3: '#9a7c52' };
+
+function mandateClass(s) {
+  if (s === 'Upcoming') return 'mandate upcoming';
+  if (s === 'In force') return 'mandate inforce';
+  if (s === 'Enforcement') return 'mandate enforcement';
+  return 'mandate none';
+}
+function tierBadge(t) { return `tier-badge tier-${t || 'X'}`; }
+function daysLabel(r) {
+  if (r.mandate_status_display === 'Enforcement') return 'now';
+  if (r.mandate_status_display === 'Upcoming' && r.days_to_deadline != null) {
+    return r.days_to_deadline >= 0 ? r.days_to_deadline + 'd' : 'past';
+  }
+  return '—';
+}
+
+function matchRow(r) {
+  if (state.fState !== 'All' && r.state !== state.fState) return false;
+  const t = r.tier_num;
+  if (!((t === 1 && state.fT1) || (t === 2 && state.fT2) || (t === 3 && state.fT3))) return false;
+  if (state.fMandate !== 'All' && r.mandate_status_display !== state.fMandate) return false;
+  if (state.fBeds !== '0' && (r.beds || 0) < parseInt(state.fBeds)) return false;
+  if (state.fQso && !r.is_qso_candidate) return false;
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    if (!(r.name.toLowerCase().includes(q) ||
+          (r.city || '').toLowerCase().includes(q) ||
+          (r.state || '').toLowerCase().includes(q) ||
+          (r.system || '').toLowerCase().includes(q))) return false;
+  }
+  return true;
+}
+
+function sortRecords(arr) {
+  const k = state.sortKey, d = state.sortDir;
+  return arr.slice().sort((a, b) => {
+    if (k === 'name') return a.name < b.name ? d : a.name > b.name ? -d : 0;
+    let av = a[k], bv = b[k];
+    if (k === 'days_to_deadline') { av = av == null ? 99999 : av; bv = bv == null ? 99999 : bv; }
+    return ((av || 0) - (bv || 0)) * d;
+  });
+}
+
+// view title/sub strings per view
+const TITLES = {
+  overview:  ['Overview — Healthcare Cycle', '15 mandate states · warehouse synced just now'],
+  map:       ['Map — National Footprint', 'Plotted by lat/lng · color = FORGE tier · size = beds · click a dot'],
+  campaigns: ['Campaigns — QSO Enrichment Grid', '5 QSOs starred · 1 row = 1 facility · sortable + filterable'],
+  accounts:  ['Accounts — Total Addressable Market', 'Full TAM · column show/hide · search · row → detail drawer'],
+  chat:      ['Chat (stub)', 'Decorative in the mockup'],
+  code:      ['Code (stub)', 'Decorative in the mockup'],
+};
+
+// =============== STATE → DOM ==================
+function render() {
+  // mode tabs
+  $$('.modetab').forEach(b => b.classList.toggle('active', b.dataset.mode === state.mode));
+  // when mode changes, swap which view set is active
+  let view = state.view;
+  if (state.mode === 'chat') view = 'chat';
+  if (state.mode === 'code') view = 'code';
+  $$('.view').forEach(v => v.classList.toggle('active', v.dataset.view === view));
+  $$('.nav-item[data-view]').forEach(n => n.classList.toggle('active', n.dataset.view === state.view && state.mode === 'cowork'));
+
+  // title/sub
+  const [title, sub] = TITLES[view] || ['', ''];
+  $('#view-title').textContent = title;
+  $('#view-sub').textContent = sub;
+
+  // filterbar visibility
+  const showFilter = state.mode === 'cowork' && ['map', 'campaigns', 'accounts'].includes(state.view);
+  $('#filterbar').classList.toggle('active', showFilter);
+  $('#filterbar').classList.toggle('hidden', !showFilter);
+
+  // filter chips
+  $$('.filter-chip[data-tier]').forEach(c => {
+    const t = c.dataset.tier;
+    const on = (t === '1' && state.fT1) || (t === '2' && state.fT2) || (t === '3' && state.fT3);
+    c.classList.toggle('on', on);
+  });
+  $('#f-qso').classList.toggle('on', state.fQso);
+  $('#f-state').value = state.fState;
+  $('#f-mandate').value = state.fMandate;
+  $('#f-beds').value = state.fBeds;
+  $('#search-input').value = state.search;
+
+  // visible record set
+  const filtered = DATA.rows.filter(matchRow);
+  $('#filter-meta').textContent = `Showing ${filtered.length.toLocaleString()} of ${DATA.metadata.total.toLocaleString()}`;
+  $('#badge-tam').textContent = filtered.length >= 1000
+    ? (filtered.length / 1000).toFixed(1) + 'k'
+    : String(filtered.length);
+
+  // per-view render
+  if (view === 'overview')  renderOverview();
+  if (view === 'campaigns') renderCampaigns(filtered);
+  if (view === 'accounts')  renderAccounts(filtered);
+  if (view === 'map')       renderMap(filtered);
+
+  renderDrawer();
+}
+
+// =============== OVERVIEW ==================
+function renderOverview() {
+  const rows = DATA.rows;
+  const md = DATA.metadata;
+  const tierA = rows.filter(r => r.forge_tier === 'A').length;
+  const tierB = rows.filter(r => r.forge_tier === 'B').length;
+  const tierC = rows.filter(r => r.forge_tier === 'C').length;
+  const qsos = rows.filter(r => r.is_qso_candidate);
+  const topQso = qsos.sort((a,b) => (b.forge_total||0) - (a.forge_total||0));
+
+  $('#view-overview').innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="label">ACCOUNTS MONITORED</div>
+        <div class="value">${fmt(md.total)}</div>
+        <div class="note">${md.states.length} mandate states</div>
+      </div>
+      <div class="kpi">
+        <div class="label">SCORED TIER&nbsp;A</div>
+        <div class="value">${fmt(tierA)}</div>
+        <div class="note">${pct(tierA, md.total)} of TAM</div>
+      </div>
+      <div class="kpi">
+        <div class="label">FORGE-A EXEC EDM</div>
+        <div class="value">${fmt(rows.filter(r => r.forge_tier === 'A' && r.edm_title).length)}</div>
+        <div class="note">named decision-makers</div>
+      </div>
+      <div class="kpi accent">
+        <div class="label">QSOs ★ STARRED</div>
+        <div class="kpi-inline">
+          <div class="value">${fmt(md.qualified)}</div>
+          <div class="note up" style="font-size:12px;font-weight:600">hand-picked</div>
+        </div>
+        <div class="note" style="font-family:'JetBrains Mono',monospace">interview-ready</div>
+      </div>
+    </div>
+
+    <div class="funnel">
+      <div style="font-size:10px; letter-spacing:0.12em; color:#7d7565; font-weight:700; position:absolute; transform:translate(2px,-32px)">QUALIFICATION FUNNEL · HEALTHCARE CYCLE</div>
+      ${funnelStep('TAM',       md.total,  'total addressable', 1.00, false)}
+      ${funnelStep('Scored',    md.scored, 'FORGE-scored',       pct(md.scored, md.total).replace('%','')/100, false)}
+      ${funnelStep('Tier A',    tierA,     'forge ≥ 12',         pct(tierA,  md.total).replace('%','')/100, false)}
+      ${funnelStep('Qualified', md.qualified, '★ QSO',           pct(md.qualified, md.total).replace('%','')/100, true)}
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="head">TOP QUALIFIED ACCOUNTS</div>
+        ${topQso.map(r => `
+          <div class="ffrow" data-ccn="${r.ccn}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;cursor:pointer">
+            <div style="font-size:13px;width:14px;color:#f6a429">★</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;color:#f0ebdf">${escapeHtml(r.name)}</div>
+              <div style="font-size:10.5px;color:#7d7565;font-family:'JetBrains Mono',monospace">${escapeHtml(r.city)}, ${r.state} · ${r.beds || '?'} beds</div>
+            </div>
+            <span class="${mandateClass(r.mandate_status_display)}">${r.mandate_status_display || '—'}</span>
+            <div style="font-size:15px;font-weight:800;color:#f6a429;font-family:'JetBrains Mono',monospace;width:36px;text-align:right">${r.forge_total}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="panel">
+        <div class="head">MANDATE BY STATE</div>
+        ${Object.entries(md.state_mandate).sort(([a],[b]) => a.localeCompare(b)).map(([st, m]) => `
+          <div style="display:flex;gap:11px;padding:9px 14px;align-items:flex-start">
+            <div class="${mandateClass(m.status)}" style="min-width:88px;text-align:center;justify-content:center">${m.status}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;color:#e3ddcf;line-height:1.35">${escapeHtml(m.name)}</div>
+              <div style="font-size:10px;color:#7d7565;font-family:'JetBrains Mono',monospace;margin-top:2px">
+                ${st} · ${m.effective_date ? 'eff ' + m.effective_date : 'date unknown'}
+                ${m.days_to_deadline != null ? ' · ' + (m.days_to_deadline >= 0 ? m.days_to_deadline + 'd to' : (-m.days_to_deadline) + 'd since') : ''}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  // wire up overview row clicks
+  $$('#view-overview .ffrow').forEach(el => {
+    el.addEventListener('click', () => selectAccount(el.dataset.ccn));
+  });
+}
+
+function funnelStep(label, value, note, frac, qual) {
+  const h = 40 + Math.min(1, Math.max(0, frac)) * 44;
+  const bg = qual
+    ? 'linear-gradient(160deg, #f6a429, #c2641a)'
+    : `rgba(246,164,41,${0.06 + frac * 0.12})`;
+  const fg = qual ? '#1a1000' : '#f5f1e8';
+  const border = qual ? 'none' : `1px solid rgba(246,164,41,${0.15 + frac * 0.3})`;
+  return `
+    <div class="funnel-step">
+      <div class="funnel-bar ${qual?'qual':''}" style="height:${h}px;background:${bg};color:${fg};border:${border}">${fmt(value)}</div>
+      <div class="name">${label}</div>
+      <div class="note">${note}</div>
+    </div>
+  `;
+}
+
+// =============== CAMPAIGNS ==================
+const CAMP_COLS = '32px minmax(220px,1.6fr) 150px 130px 78px 130px 130px 84px 140px 130px 70px';
+function renderCampaigns(filtered) {
+  // restrict to QSO candidates
+  const rows = sortRecords(filtered.filter(r => r.is_qso_candidate));
+  $('#view-campaigns').innerHTML = `
+    <div style="padding:16px 22px 10px;display:flex;align-items:center;gap:12px">
+      <div style="display:flex;gap:4px;background:#1a1710;border:1px solid #2a261d;border-radius:9px;padding:3px">
+        <div style="padding:6px 13px;border-radius:6px;background:#2c2718;color:#f5f1e8;font-size:12.5px;font-weight:600">QSO · Q2 Healthcare</div>
+        <div style="padding:6px 13px;border-radius:6px;color:#8a8273;font-size:12.5px;font-weight:500;cursor:default" class="ffseg">Education</div>
+        <div style="padding:6px 13px;border-radius:6px;color:#8a8273;font-size:12.5px;font-weight:500;cursor:default" class="ffseg">Hospitality</div>
+      </div>
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:#7d7565;font-family:'JetBrains Mono',monospace">${rows.length} ★ in cycle</span>
+    </div>
+    <div class="table-shell">
+      <div class="table-scroll">
+        <div class="table-inner">
+          <div class="table-head" style="grid-template-columns:${CAMP_COLS}">
+            <div class="col"></div>
+            <div class="col sort ${state.sortKey==='name'?'active':''}" data-sort="name">FACILITY ${arrow('name')}</div>
+            <div class="col">PARENT SYSTEM</div>
+            <div class="col">LOCATION</div>
+            <div class="col sort ${state.sortKey==='beds'?'active':''}" data-sort="beds">BEDS ${arrow('beds')}</div>
+            <div class="col sort ${state.sortKey==='forge_total'?'active':''}" data-sort="forge_total">FORGE ${arrow('forge_total')}</div>
+            <div class="col">MANDATE</div>
+            <div class="col sort ${state.sortKey==='days_to_deadline'?'active':''}" data-sort="days_to_deadline">DEADLINE ${arrow('days_to_deadline')}</div>
+            <div class="col">INCUMBENT</div>
+            <div class="col">EDM (title)</div>
+            <div class="col">TIER</div>
+          </div>
+          ${rows.map(r => `
+            <div class="table-row ffrow" data-ccn="${r.ccn}" style="grid-template-columns:${CAMP_COLS}">
+              <div class="cell" style="font-size:14px;color:#f6a429">${r.is_qso_candidate?'★':''}</div>
+              <div class="cell"><div class="name">${escapeHtml(r.name)}</div><div class="sub">${escapeHtml(r.sub_segment)}</div></div>
+              <div class="cell muted">${escapeHtml(r.system || '—')}</div>
+              <div class="cell"><div class="city">${escapeHtml(r.city)}</div><div class="state">${r.state}</div></div>
+              <div class="cell mono">${r.beds || '—'}</div>
+              <div class="cell forge-cell"><div class="forge-bar"><div style="width:${(r.forge_total||0)/27*100}%"></div></div><span class="forge-num">${r.forge_total}</span></div>
+              <div class="cell"><span class="${mandateClass(r.mandate_status_display)}">${r.mandate_status_display || '—'}</span></div>
+              <div class="cell mono">${daysLabel(r)}</div>
+              <div class="cell ellipsis italic" style="font-size:11.5px">not enriched</div>
+              <div class="cell muted">${escapeHtml(r.edm_title || '— Tier B')}</div>
+              <div class="cell"><span class="${tierBadge(r.forge_tier)}">${r.forge_tier}</span></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  wireSortAndRows('#view-campaigns');
+}
+
+// =============== ACCOUNTS ==================
+const ACCT_COLS = '32px minmax(200px,1.6fr) 150px 130px 78px 130px 130px 84px 130px 62px';
+const ACCT_CAP = 200; // cap rendered rows for perf
+function renderAccounts(filtered) {
+  const rows = sortRecords(filtered);
+  const shown = rows.slice(0, ACCT_CAP);
+  $('#view-accounts').innerHTML = `
+    <div class="table-shell">
+      <div class="table-scroll">
+        <div class="table-inner" style="min-width:1080px">
+          <div class="table-head" style="grid-template-columns:${ACCT_COLS}">
+            <div class="col"></div>
+            <div class="col sort ${state.sortKey==='name'?'active':''}" data-sort="name">FACILITY ${arrow('name')}</div>
+            <div class="col">PARENT SYSTEM</div>
+            <div class="col">LOCATION</div>
+            <div class="col sort ${state.sortKey==='beds'?'active':''}" data-sort="beds">BEDS ${arrow('beds')}</div>
+            <div class="col sort ${state.sortKey==='forge_total'?'active':''}" data-sort="forge_total">FORGE ${arrow('forge_total')}</div>
+            <div class="col">MANDATE</div>
+            <div class="col sort ${state.sortKey==='days_to_deadline'?'active':''}" data-sort="days_to_deadline">DEADLINE ${arrow('days_to_deadline')}</div>
+            <div class="col">EDM (title)</div>
+            <div class="col">TIER</div>
+          </div>
+          ${shown.map(r => `
+            <div class="table-row ffrow" data-ccn="${r.ccn}" style="grid-template-columns:${ACCT_COLS}">
+              <div class="cell" style="font-size:14px;color:#f6a429">${r.is_qso_candidate?'★':''}</div>
+              <div class="cell"><div class="name">${escapeHtml(r.name)}</div><div class="sub">${escapeHtml(r.sub_segment)}</div></div>
+              <div class="cell muted">${escapeHtml(r.system || '—')}</div>
+              <div class="cell"><div class="city">${escapeHtml(r.city)}</div><div class="state">${r.state}</div></div>
+              <div class="cell mono">${r.beds || '—'}</div>
+              <div class="cell forge-cell"><div class="forge-bar"><div style="width:${(r.forge_total||0)/27*100}%"></div></div><span class="forge-num">${r.forge_total}</span></div>
+              <div class="cell"><span class="${mandateClass(r.mandate_status_display)}">${r.mandate_status_display || '—'}</span></div>
+              <div class="cell mono">${daysLabel(r)}</div>
+              <div class="cell muted ${r.edm_title?'':'italic'}">${escapeHtml(r.edm_title || '— Tier B')}</div>
+              <div class="cell"><span class="${tierBadge(r.forge_tier)}">${r.forge_tier}</span></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 22px 22px;font-size:11px;color:#6f6a5c;font-family:'JetBrains Mono',monospace">
+      Showing ${shown.length} of ${rows.length.toLocaleString()} matching rows (${DATA.metadata.total.toLocaleString()} total TAM). Refine filters to narrow.
+    </div>
+  `;
+  wireSortAndRows('#view-accounts');
+}
+
+function arrow(k) { return state.sortKey === k ? (state.sortDir < 0 ? '↓' : '↑') : ''; }
+function wireSortAndRows(scope) {
+  $$(scope + ' .col.sort').forEach(c => c.addEventListener('click', () => {
+    const k = c.dataset.sort;
+    if (state.sortKey === k) state.sortDir = -state.sortDir;
+    else { state.sortKey = k; state.sortDir = -1; }
+    render();
+  }));
+  $$(scope + ' .ffrow').forEach(el => el.addEventListener('click', () => selectAccount(el.dataset.ccn)));
+}
+
+// =============== MAP ==================
+function renderMap(filtered) {
+  // build container once
+  const host = $('#view-map');
+  if (!state._mapDrawn) {
+    host.innerHTML = `
+      <div class="mapbox" id="mapbox">
+        <svg id="map-svg"></svg>
+      </div>
+      <div class="map-tip" id="map-tip"></div>
+      <div class="map-card tl">
+        <span style="font-size:11px;color:#cfc8b8">National footprint</span>
+        <span class="num" id="map-count">—</span>
+      </div>
+      <div class="map-card bl">
+        <div class="hdr">MAP&nbsp;KEY</div>
+        <div class="row"><span class="dot1"></span>★ QSO candidate</div>
+        <div class="row"><span class="dot2"></span>Active safety signal</div>
+        <div class="sep"></div>
+        <div class="row"><span class="dot3"></span>Tier 1 · size = beds</div>
+        <div class="row"><span class="dot4"></span>Tier 2</div>
+        <div class="row"><span class="dot5"></span>Tier 3</div>
+      </div>
+      <div class="map-card map-zoom">
+        <div class="map-zoom-btn" id="map-zoom-in"><svg width="15" height="15" viewBox="0 0 15 15"><path d="M7.5 2.5v10M2.5 7.5h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <div class="map-zoom-btn" id="map-zoom-out"><svg width="15" height="15" viewBox="0 0 15 15"><path d="M2.5 7.5h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <div class="map-zoom-btn" id="map-zoom-reset"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 3.2A4.3 4.3 0 1 0 11.8 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7.5 1 7.5 4.2 10.3 3" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/></svg></div>
+      </div>
+    `;
+    initMap();
+    state._mapDrawn = true;
+  }
+  // update count + visible dots
+  $('#map-count').textContent = filtered.filter(r => r.lat).length.toLocaleString() + ' facilities';
+  if (window._mapApi) window._mapApi.update(filtered);
+}
+
+function initMap() {
+  const cont = $('#mapbox');
+  const tip = $('#map-tip');
+  const w = cont.clientWidth, h = cont.clientHeight;
+  const svg = d3.select('#map-svg').attr('viewBox', `0 0 ${w} ${h}`);
+  const root = svg.append('g');
+  fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+    .then(r => r.json())
+    .then(us => {
+      const PRIORITY = new Set(['WA','CA','NY','NJ','LA','FL','IL','TX','AZ','MA','NC','OR','CO','CT','MD']);
+      // map state FIPS to abbreviation
+      const FIPS = {'01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT','10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL','18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD','25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE','32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND','39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD','47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV','55':'WI','56':'WY'};
+      const states = topojson.feature(us, us.objects.states);
+      const mesh = topojson.mesh(us, us.objects.states, (a, b) => a !== b);
+      const proj = d3.geoAlbersUsa().fitExtent([[26, 18], [w - 26, h - 26]], states);
+      const path = d3.geoPath(proj);
+
+      // base states (priority states slightly lighter)
+      root.append('g').selectAll('path').data(states.features).join('path')
+        .attr('d', path)
+        .attr('fill', d => PRIORITY.has(FIPS[d.id]) ? '#1f1c14' : '#181610')
+        .attr('stroke', 'none');
+      root.append('path').datum(mesh).attr('d', path).attr('fill', 'none').attr('stroke', '#2c281e').attr('stroke-width', 0.6);
+
+      // dot group (filled in update)
+      const dotG = root.append('g').attr('class', 'dots');
+
+      // project every row once
+      DATA.rows.forEach(r => {
+        if (r.lat && r.lng) r._p = proj([r.lng, r.lat]);
+      });
+
+      const radius = r => 1.2 + Math.min(r.beds || 100, 1000) / 1000 * 2.2;
+
+      function update(filtered) {
+        const visible = filtered.filter(r => r._p);
+        const sel = dotG.selectAll('g.dot').data(visible, r => r.ccn);
+        const enter = sel.enter().append('g').attr('class', 'dot')
+          .attr('transform', r => `translate(${r._p[0]},${r._p[1]})`)
+          .style('cursor', 'pointer')
+          .on('mouseenter', (e, d) => showTip(d, e))
+          .on('mousemove', e => moveTip(e))
+          .on('mouseleave', hideTip)
+          .on('click', (e, d) => { e.stopPropagation(); selectAccount(d.ccn); });
+        enter.each(function(d) {
+          const g = d3.select(this);
+          if (d.is_qso_candidate) {
+            g.append('circle').attr('r', 11).attr('fill', '#f6a429').attr('opacity', 0.5).style('animation', 'ffpulse 2.8s ease-out infinite');
+            g.append('circle').attr('r', 7).attr('fill', '#f6a429').attr('stroke', '#fff').attr('stroke-width', 2);
+            g.append('circle').attr('r', 2.6).attr('fill', '#fff');
+          } else {
+            g.append('circle')
+              .attr('r', radius(d))
+              .attr('fill', TIER_COLOR[d.tier_num])
+              .attr('opacity', d.tier_num === 1 ? 0.85 : 0.55)
+              .attr('stroke', '#1a1407')
+              .attr('stroke-width', 0.8);
+          }
+        });
+        sel.exit().remove();
+      }
+
+      function showTip(d, e) {
+        tip.textContent = `${d.name} · ${d.city}, ${d.state} · ${d.beds || '?'} beds · T${d.tier_num} · ${d.mandate_status_display || '—'} · FORGE ${d.forge_total}`;
+        tip.style.opacity = 1;
+      }
+      function moveTip(e) {
+        const r = cont.getBoundingClientRect();
+        tip.style.left = (e.clientX - r.left) + 'px';
+        tip.style.top = (e.clientY - r.top) + 'px';
+      }
+      function hideTip() { tip.style.opacity = 0; }
+
+      const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', e => {
+        root.attr('transform', e.transform);
+      });
+      svg.call(zoom).on('dblclick.zoom', null);
+
+      $('#map-zoom-in').addEventListener('click', () => svg.transition().duration(240).call(zoom.scaleBy, 1.6));
+      $('#map-zoom-out').addEventListener('click', () => svg.transition().duration(240).call(zoom.scaleBy, 1 / 1.6));
+      $('#map-zoom-reset').addEventListener('click', () => svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity));
+
+      window._mapApi = { update, zoom, svg, proj };
+      // initial draw
+      const initialFiltered = DATA.rows.filter(matchRow);
+      update(initialFiltered);
+    });
+}
+
+// =============== DRAWER ==================
+function selectAccount(ccn) {
+  state.selected = ccn;
+  renderDrawer();
+}
+function closeDrawer() { state.selected = null; renderDrawer(); }
+
+function renderDrawer() {
+  const drawer = $('#drawer'), mask = $('#drawer-mask');
+  if (!state.selected) {
+    drawer.classList.remove('open');
+    mask.classList.remove('open');
+    drawer.innerHTML = '';
+    return;
+  }
+  const r = DATA.rows.find(x => x.ccn === state.selected);
+  if (!r) { closeDrawer(); return; }
+  const enr = r.forge_tier; // A/B/C/X
+  drawer.innerHTML = `
+    <div class="drawer-head">
+      <div style="flex:1;min-width:0">
+        <h2>${r.is_qso_candidate ? '<span style="color:#f6a429">★ </span>' : ''}${escapeHtml(r.name)}</h2>
+        <div class="sub">${escapeHtml(r.system || '—')} · ${escapeHtml(r.city)}, ${r.state} · CCN ${r.ccn}</div>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="body">
+      <div class="section">
+        <div class="chips">
+          <span class="${tierBadge(enr)}">Tier ${enr} enrichment</span>
+          <span class="${mandateClass(r.mandate_status_display)}">${escapeHtml(r.mandate_status_display || '—')}</span>
+          <span class="chip ${r.has_ED?'on':''}">${r.has_ED?'Emergency Dept ✓':'No ED'}</span>
+          <span class="chip ${r.has_behavioral_unit?'on':''}">${r.has_behavioral_unit?'Behavioral Unit ✓':'No behavioral unit'}</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-head">FACILITY</div>
+        <div class="stat-row"><span>Beds (certified)</span><span>${r.beds || '—'}</span></div>
+        <div class="stat-row"><span>Sub-segment</span><span>${escapeHtml(r.sub_segment)}</span></div>
+        <div class="stat-row"><span>Facility tier</span><span>${r.tier_num}</span></div>
+        <div class="stat-row"><span>Mandate</span><span>${escapeHtml(r.mandate_name || '—')}</span></div>
+        <div class="stat-row"><span>Effective date</span><span>${r.effective_date || '—'}</span></div>
+        <div class="stat-row"><span>Days to deadline</span><span>${r.days_to_deadline == null ? '—' : (r.days_to_deadline >= 0 ? r.days_to_deadline + 'd to' : (-r.days_to_deadline) + 'd since')}</span></div>
+      </div>
+      <div class="section">
+        <div class="section-head">FORGE SCORE · ${r.forge_total}/27</div>
+        <div class="forge-row"><div class="lbl">Acute Need</div><div class="bar"><div style="width:${(r.forge_acute_need||0)/3*100}%"></div></div><div class="v">${r.forge_acute_need}/3</div></div>
+        <div class="forge-row"><div class="lbl">Event</div><div class="bar"><div style="width:${(r.forge_event||0)/3*100}%"></div></div><div class="v">${r.forge_event}/3</div></div>
+        <div class="forge-row"><div class="lbl">Gravity</div><div class="bar"><div style="width:${(r.forge_gravity||0)/3*100}%"></div></div><div class="v">${r.forge_gravity}/3</div></div>
+        <div class="stat-row" style="border-top:1px solid #221f18; margin-top:6px; padding-top:8px"><span>Tier</span><span><span class="${tierBadge(enr)}">${enr}</span></span></div>
+      </div>
+      <div class="section">
+        <div class="section-head">BUYING COMMITTEE</div>
+        ${r.edm_title ? `
+          <div class="stat-row"><span>EDM (NPPES auth_official)</span><span>${escapeHtml(r.edm_title)}</span></div>
+          <div class="stat-row"><span>Name</span><span style="color:#6f6a5c;font-style:italic">redacted from public dashboard</span></div>
+        ` : `<div class="empty">No EDM identified — NPPES unmatched at Tier A</div>`}
+      </div>
+      <div class="section">
+        <div class="section-head">TIER-B FIELDS (deferred)</div>
+        <div class="empty">Incumbent vendor · contract expiry · named champion — resolve at Tier B (Apify + manual). Not enriched in this build.</div>
+      </div>
+      ${r.is_qso_candidate && r.one_off_brief ? `
+        <div class="section">
+          <div class="section-head">QSO ONE-OFF DRAFT</div>
+          <div style="font-size:12px;color:#a39c8c;line-height:1.55;margin-bottom:10px">Hand-written brief + one-off email in <code style="background:#19160e;padding:2px 6px;border-radius:4px;color:#9fe0ba;font-family:'JetBrains Mono',monospace;font-size:11px">${r.one_off_brief.replace('../', '')}</code></div>
+          <a href="${r.one_off_brief}" target="_blank" class="qso-cta">★ Open QSO brief →</a>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  drawer.classList.add('open');
+  mask.classList.add('open');
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// =============== EVENT WIRING ==================
+function wire() {
+  // mode tabs
+  $$('.modetab').forEach(b => b.addEventListener('click', () => { state.mode = b.dataset.mode; render(); }));
+  // nav items
+  $$('.nav-item[data-view]').forEach(n => n.addEventListener('click', () => {
+    state.mode = 'cowork';
+    state.view = n.dataset.view;
+    render();
+  }));
+  // search
+  $('#search-input').addEventListener('input', e => { state.search = e.target.value; render(); });
+  // state filter
+  $('#f-state').addEventListener('change', e => { state.fState = e.target.value; render(); });
+  $('#f-mandate').addEventListener('change', e => { state.fMandate = e.target.value; render(); });
+  $('#f-beds').addEventListener('change', e => { state.fBeds = e.target.value; render(); });
+  // tier chips
+  $$('.filter-chip[data-tier]').forEach(c => c.addEventListener('click', () => {
+    const t = c.dataset.tier;
+    if (t === '1') state.fT1 = !state.fT1;
+    if (t === '2') state.fT2 = !state.fT2;
+    if (t === '3') state.fT3 = !state.fT3;
+    render();
+  }));
+  $('#f-qso').addEventListener('click', () => { state.fQso = !state.fQso; render(); });
+  $('#filter-clear').addEventListener('click', () => {
+    state.fState = 'All'; state.fT1 = true; state.fT2 = true; state.fT3 = true;
+    state.fMandate = 'All'; state.fBeds = '0'; state.fQso = false; state.search = '';
+    render();
+  });
+  // drawer mask
+  $('#drawer-mask').addEventListener('click', closeDrawer);
+  window.closeDrawer = closeDrawer;
+  // esc closes drawer
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+}
+
+// init: load data.json
+fetch('data.json')
+  .then(r => r.json())
+  .then(d => {
+    DATA = d;
+    // populate state filter
+    const opts = ['<option value="All">State: all</option>']
+      .concat(d.metadata.states.map(s => `<option value="${s}">${s}</option>`));
+    $('#f-state').innerHTML = opts.join('');
+    // sidebar pipeline counts
+    const tierA = d.rows.filter(r => r.forge_tier === 'A').length;
+    const tierB = d.rows.filter(r => r.forge_tier === 'B').length;
+    const tierC = d.rows.filter(r => r.forge_tier === 'C').length;
+    $('#stat-a').textContent = tierA.toLocaleString();
+    $('#stat-b').textContent = tierB.toLocaleString();
+    $('#stat-c').textContent = tierC.toLocaleString();
+    $('#stat-qso').textContent = d.metadata.qualified;
+    $('#badge-qso').textContent = d.metadata.qualified;
+    $('#seg-meta').textContent = `Cycle 04 · Q2 FY26 · synced ${d.metadata.generated_at}`;
+    wire();
+    render();
+  })
+  .catch(e => {
+    document.body.innerHTML = '<div style="padding:40px;color:#ff8a7e;font-family:monospace">Failed to load data.json — run <code>python3 dashboard/build-data.py</code> first.<br><br>'+e.message+'</div>';
+  });
+</script>
+</body>
+</html>
