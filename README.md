@@ -1,188 +1,173 @@
-# GTM Starter Kit
+# Firefly Revenue Intel — a working GTM engine for the Healthcare WPV vertical
 
-Built by [The Revenue Architects](https://www.the-revenue-architects.com) — a GTM engineering firm based in San Francisco. We work with growth-stage B2B SaaS companies to design and build their revenue systems: signal infrastructure, CRM architecture, data pipelines, AI-powered workflows, and the operational layer that connects them.
+A live, queryable TAM of **2,353 U.S. hospitals** in the 15 priority mandate states, scored against Firefly's **F.O.R.G.E.** qualification framework, surfaced as a static dashboard, and refined down to **5 hand-picked QSOs** with research briefs and one-off email drafts.
 
-This repo is the open-source version of what we build with clients. Clone it, fill in your context files once, and run AI-powered GTM tasks from a single prompt — no rebuilding context every session.
-
----
-
-## How It Works
-
-Claude Code reads `CLAUDE.md` automatically at the start of every session. That file contains your company overview, ICP, signals, personas, and current priorities. Once it's filled in, you can run any task with a one-line prompt — no re-explaining your context each time.
-
-```
-Read skills/account-research/SKILL.md and research stripe.com
-```
-
-Claude reads your ICP, signals, and personas from the repo and produces a full account research brief. You didn't paste any context. It was already there.
+Built end-to-end from public data sources. **$0 of marginal spend.** The kind of thing a GTM Engineer ships in week one.
 
 ---
 
-## What's Inside
+## What you can do with this repo in 90 seconds
 
-```
-gtm-starter-kit/
-│
-├── CLAUDE.md                           ← Fill this in first. Claude reads it every session.
-│
-├── context/                            ← Your GTM institutional knowledge
-│   ├── profile.md                      ← Company overview, product, team, reference customers
-│   ├── icp-definition.md              ← ICP tiers, filters, anti-ICP, qualification criteria
-│   ├── signal-library.md              ← Signals with scoring, detection methods, hooks
-│   ├── positioning.md                 ← Value pillars, competitive positioning, what not to say
-│   ├── competitor-radar.md            ← Battlecards, win/loss patterns
-│   └── personas/
-│       └── template.md                ← Persona template — duplicate for each buyer role
-│
-├── sync/                               ← Scripts for pulling live data into the repo
-│   ├── README.md                       ← Setup and usage
-│   ├── .env.example                    ← Copy to .env and fill in API keys
-│   ├── sync-campaign-results.py        ← Pull reply/meeting rates from outbound tool
-│   └── sync-signal-performance.py     ← Aggregate signal performance across campaigns
-│
-├── skills/                             ← Claude executes these. One-line prompts.
-│   ├── setup/SKILL.md                 ← Run first. Provide domain → repo auto-populated.
-│   ├── account-research/SKILL.md      ← Deep research on any account before outreach
-│   ├── signal-to-sequence/SKILL.md    ← Turn a signal into a live outbound campaign
-│   ├── icp-scoring/SKILL.md          ← Score accounts against your ICP, assign tiers
-│   └── weekly-update/SKILL.md        ← Keep context current. Run Monday mornings.
-│
-├── workflows/                          ← How your team operates. Human process docs.
-│   ├── enrichment.md                  ← Data waterfall: free sources → Clay → proprietary
-│   ├── signal-routing.md              ← Decision tree: signal fires → what happens next
-│   └── campaign-build.md             ← End-to-end: audience → launch → measurement
-│
-├── playbooks/                          ← Step-by-step for specific situations
-│   ├── new-signal-response.md         ← Signal fires: validate → score → research → send
-│   └── competitor-switch.md          ← Four scenarios: unknown, active eval, intent, locked in
-│
-├── outputs/                            ← All skill outputs land here
-│   ├── scoring/                        ← ICP scoring outputs
-│   ├── campaigns/                      ← Campaign briefs and sequences
-│   └── .gitkeep
-│
-└── examples/
-    └── sample-company/                 ← Relay — a fully built-out example
-        ├── CLAUDE.md
-        ├── context/
-        │   ├── profile.md
-        │   ├── icp-definition.md
-        │   ├── signal-library.md      ← Has real performance data attached
-        │   ├── positioning.md         ← Value pillars, messaging matrix, what not to say
-        │   ├── competitor-radar.md
-        │   └── personas/
-        │       └── head-of-revops.md
-        └── outputs/
-            ├── weekly-log.md          ← Change history from weekly-update skill runs
-            ├── 2024-03-15-research-northstar-analytics.md   ← Sample research brief
-            └── campaigns/
-                └── 2024-03-01-series-b-revops-tier2/
-                    ├── brief.md       ← Campaign brief with results tracking
-                    └── sequences.md  ← Full email sequences, live copy
-```
-
-**Skills vs. Workflows — what's the difference?**
-- **Skills** are for Claude to execute. You run them with a prompt and Claude produces an output. This includes the weekly-update skill, which keeps the repo current rather than producing a deliverable.
-- **Workflows** document how your team operates — the decision trees and processes that connect your tools. They're reference documents for humans, not execution instructions for Claude.
+| | Link |
+|---|---|
+| **Live dashboard** (US map, Clay-style accounts list, FORGE rankings) | _deploy URL — pending push_ |
+| **5 named QSOs** with full briefs + one-off email drafts | [documents/qso_briefs.md](documents/qso_briefs.md) |
+| **The pipeline source-map** (regenerable SVG) | [diagrams/source-map.svg](diagrams/source-map.svg) |
+| **What got scored on what** (methodology, dimension by dimension) | [skills/forge-score/SKILL.md](skills/forge-score/SKILL.md) |
+| **Why we don't seed from NPPES** (and what we do instead) | [skills/seed-tier-a/SKILL.md](skills/seed-tier-a/SKILL.md) |
+| **The hard scope rules (no email sequences, no fabrication, no PHI)** | [CLAUDE.md](CLAUDE.md) |
 
 ---
 
-## Getting Started in 3 Steps
+## The five QSOs
 
-### Step 1: Clone and open
+| # | Facility | State | Beds | System | Mandate | Play |
+|---|---|---|---|---|---|---|
+| 1 | [Harborview Medical Center](documents/qso-briefs/qso-1-harborview.md) | WA | 413 | UW Medicine | RCW 49.19 — **In force** | Feb 14, 2026 ED rampage ($100K damage) + enforcement clock |
+| 2 | [Clara Maass Medical Center](documents/qso-briefs/qso-2-clara-maass.md) | NJ | 472 | RWJBarnabas Health | N.J.S.A. 26:2H-5.17 — **In force** | RWJB's published 5-step framework + 1199SEIU contract pressure |
+| 3 | [NewYork-Presbyterian Hospital](documents/qso-briefs/qso-3-nyp.md) | NY | 2,262 | NYP Healthcare | Ch.618/2025 — **Upcoming 2027-01-01** | TVTP-grant peer-leader, scale to 10+ campuses before deadline |
+| 4 | [CHRISTUS Spohn — Corpus Christi](documents/qso-briefs/qso-4-christus-spohn.md) | TX | 1,040 | CHRISTUS Health | SB240 — **In force** | Nov 13, 2024 dementia-hoax — 50 officers, false-alarm operational cost |
+| 5 | [Our Lady of the Lake](documents/qso-briefs/qso-5-our-lady-of-the-lake.md) | LA | 976 | FMOL Health | **Lynne Truxillo Act** — **In force** | Two homicides + active lawsuit naming incumbent vendor |
+
+Each brief has: account snapshot · FORGE rationale · buying committee · evidence URLs · 80–125 word one-off draft · *why this opening*.
+
+> **Important constraint**: QSO 5 has active wrongful-death litigation. The brief is internal-only until Legal + CRO clear external outreach. See the brief for the full constraint section.
+
+---
+
+## How the engine works
+
+```
+CMS HGI ──┐
+AHRQ ─────┤
+CMS POS ──┼──→  data/staging/  ──→  data/mart/tam.csv  ──→  FORGE scoring  ──→  5 QSOs
+NPPES ────┤                          (2,353 rows)              (622 Tier-A)         (briefs + drafts)
+Census ───┤                                                          │
+mandates ─┘                                                          ▼
+                                                              dashboard/index.html
+                                                              (static, single-file)
+```
+
+**Step 1 — Seed.** Filter CMS Hospital General Information to 15 priority states. Dedup. Left-join AHRQ Compendium (parent_system, facilities_in_system). Left-join CMS POS Q1 2026 (certified beds, has_behavioral_unit). Enrich via NPPES (DBA name, physical address, edm_seed from auth_official — with hospital-aware DBA preference so we don't end up with "...PHARMACY" or "...TRANSPORT" as the facility name). Batch-geocode via Census. Join state WPV mandates with status logic (In force / Upcoming / Enforcement). Tier by beds + hospital type. Output: `data/mart/tam.csv`.
+
+**Step 2 — Score.** F.O.R.G.E. = Fit (gate) → **Acute Need × Event × Gravity**, each 0-3, product 0-27. Per CLAUDE.md: never pre-call score Resolve or Clarity. Acute Need uses **research-backed AHRQ safety-net proxies** (high-DSH, high-UC, major-teaching) clearly labeled in the `acute_need_evidence` column — not direct OSHA citations or 990 narrative, which are deferred Tier-B work documented in the SKILL.md. **No fabricated values anywhere.** Distribution: A=622, B=426, C=94, X=1211.
+
+**Step 4 — QSOs.** Hand-picked 5 from FORGE-A across state / system / mandate-status diversity, with C-suite NPPES EDM contacts, with public-evidence signal stacks researched via free sources only (news, AHA case studies, DHS grantee reports, lawsuit filings).
+
+**Step 5 — Dashboard.** Single-file static HTML (no framework) reading `dashboard/data.json` (the PII-redacted JSON-ified mart). D3.js + topojson-client from CDN. Overview, Map, Campaigns, Accounts. Detail drawer per row.
+
+---
+
+## What's deliberately NOT in scope
+
+| Step | Status | Why |
+|---|---|---|
+| Step 3 (Tier-B at-scale enrichment) | Deferred | Incumbent-vendor signal at scale hit anti-scraping walls (Cloudflare gates, customer logos as images, federal-only USA Spending coverage). Realistic only via manual list-building or paid Apify (~$50-100). |
+| Step 6 (Weekly refresh loop) | Not started | Operational, not portfolio-critical |
+| OSHA Severe Injury Reports → real Acute Need | Deferred | Direct CSV URL not publishable from OSHA's docs page; would require dashboard navigation or DOL data-catalog hunt |
+| IRS 990 narrative grep → real WPV-program signal | Deferred | ProPublica API exposes financial summary only; current 990 PDFs unavailable through API; would require AWS S3 e-file XML fetch + parser (~3-4 hours infra) |
+| News-incident enrichment at scale | Deferred | Free-tier API limits don't cover 2,353 facilities. Realistic only at Tier-B (curated ~300). |
+| Apify / Apollo / LinkedIn Sales Nav | Not used | Per CLAUDE.md: paid contact tools reserved for Tier-C 5-QSO scope under explicit gate. Not invoked this build. |
+| Chat mode / Code mode in dashboard | Decorative | The Claude Design mockup included them; we shipped stub panes acknowledging the scope cut |
+
+**This is the honest scope.** Every deferred item is documented in its skill's `SKILL.md` with a specific reason and a future-session restart point.
+
+---
+
+## Repository map
+
+```
+firefly-gtm/
+├── CLAUDE.md                       # locked scope + framework (read first)
+├── RUNBOOK.md                      # the 6 ordered steps
+├── README.md                       # this file
+│
+├── context/                        # ICP, positioning, signal library, personas
+├── data/
+│   ├── reference/                  # hand-curated CSVs — 87-row mandate database, coverage grid, competitors
+│   ├── raw/                        # source data (gitignored — large + regenerable)
+│   ├── staging/                    # pipeline intermediates (gitignored)
+│   └── mart/
+│       ├── tam.csv                 # full mart with contact info (gitignored, PII)
+│       ├── tam_scored.csv          # full scored mart with PII (gitignored)
+│       └── tam_scored_sample.csv   # 170-row redacted committable sample
+│
+├── skills/
+│   ├── seed-tier-a/                # 8-step CMS-first pipeline (Python stdlib + httpx)
+│   ├── forge-score/                # FORGE rubrics + scoring (Python stdlib)
+│   └── …                           # account-research, weekly-update, etc. (from starter kit)
+│
+├── documents/
+│   ├── qso_briefs.md               # the 5-QSO index
+│   └── qso-briefs/qso-N-*.md       # per-account briefs + one-offs
+│
+├── dashboard/
+│   ├── index.html                  # single-file static dashboard (~30KB JS + inline CSS)
+│   ├── build-data.py               # tam_scored.csv → data.json (PII-redacted)
+│   └── data.json                   # the PII-redacted artifact (2.7MB, regenerable)
+│
+├── diagrams/
+│   ├── source-map.svg              # pipeline diagram, hand-drawn aesthetic
+│   ├── generate_source_map.py      # regenerator
+│   └── source-map.tldraw.js        # tldraw exec-ready version (for when MCP works)
+│
+└── reference-artifacts/            # Firefly framework HTMLs, tracker, interview brief
+```
+
+---
+
+## How to reproduce locally
 
 ```bash
-git clone https://github.com/KarlRaf/gtm-starter-kit.git
-cd gtm-starter-kit
-claude .
+# 1. Seed the TAM (~25 min wall-clock; mostly NPPES network)
+python3 skills/seed-tier-a/run.py --all
+
+# 2. Apply FORGE scoring (~30 sec)
+python3 skills/forge-score/run.py --all
+
+# 3. Rebuild the dashboard data artifact
+python3 dashboard/build-data.py
+
+# 4. Serve the dashboard
+cd dashboard && python3 -m http.server 4173
+# → http://127.0.0.1:4173
 ```
+
+**Requires**: Python 3.9+ with `httpx`. No npm, no React build, no framework dependencies. Standard library does the work.
 
 ---
 
-### Step 2: Run setup with your domain (15–30 min)
+## Hard rules the engine respects
 
-```
-Read skills/setup/SKILL.md and set up this repo for [your-domain.com]
-```
+From `CLAUDE.md`, non-negotiable:
 
-Claude researches your company — website, Crunchbase, LinkedIn, G2, job postings — and writes every context file immediately from public data. No questions asked upfront. You see the repo populate in real time.
-
-When it's done, it shows you what was filled and what was inferred — then offers a 3-minute refinement pass (5 questions) to replace inferred fields with your actual win patterns, ACV range, and signals. Optional. The repo works either way.
-
----
-
-### Step 3: Run your first skill
-
-```
-Read skills/account-research/SKILL.md and research [company.com]
-```
-
-Your context is already there. Claude knows your ICP, your signals, your personas. The output is a full research brief — not a generic summary.
-
-**Other skills to run next:**
-```
-# Score a list against your ICP
-Read skills/icp-scoring/SKILL.md and score these companies: [paste list]
-
-# Build a campaign from a signal
-Read skills/signal-to-sequence/SKILL.md.
-Build a Tier 2 campaign for accounts triggering [signal name]. Target [persona].
-```
-
-All outputs land in `outputs/` — see the naming convention below.
+1. **Never fabricate.** Unknown fields are `null` + `needs_review=TRUE`. Acute Need proxies are explicitly labeled as proxies in the `acute_need_evidence` column.
+2. **Public data only. No PHI.** NPPES auth_official is the strongest contact signal we use; phone numbers stripped from public artifacts.
+3. **One-offs, not sequences.** Five emails to five humans about five specific events. No drip cadence, no `{{first_name}}`, no automation.
+4. **Apify / paid contact tools reserved for Tier-C** (the 5 QSOs) — and only under explicit stop-and-confirm. Not invoked this build.
+5. **Source URLs everywhere.** Every signal in every QSO brief carries a public evidence URL. Every derived field in the mart carries a `*_source_url`.
+6. **Trusted-standard moat reinforced, never undercut.** Firefly's positioning is regulatory / mandate-driven. Outputs reflect that.
 
 ---
 
-## Output Naming Convention
+## Build history
 
 ```
-outputs/YYYY-MM-DD-[type]-[name].md
-
-Examples:
-outputs/2024-03-15-research-northstar-analytics.md
-outputs/2024-03-01-scoring-q1-prospect-list.md
-outputs/campaigns/2024-03-01-series-b-revops-tier2/brief.md
+b59edde  feat(dashboard):    single-file Firefly Revenue Intel dashboard
+b40e3ac  feat(qsos):         ship 5 hand-picked QSOs with per-account briefs + one-offs
+5bc9251  feat(forge-score):  rank TAM via F.O.R.G.E. framework (622 Tier-A)
+68f9a5d  feat(seed-tier-a):  build 15-state TAM seed pipeline (2,353 hospitals)
+6b810cb  feat(firefly):      customize starter kit for Firefly GTM engine
 ```
+
+Each commit message tells the story of what shipped + what got deferred and why.
 
 ---
 
-## Keeping It Current
+## Author
 
-Run the weekly-update skill every Monday morning:
+**Ryan Michaels** · Sales Engineering · ex-SDR/AE pivoting to GTM Engineering
 
-```
-Read skills/weekly-update/SKILL.md and run the weekly context update.
-```
+Built in collaboration with Claude Code (Opus 4.7) as the implementation partner — judgment, scope, and architectural calls are mine; the engine code was paired.
 
-Claude reads the repo, identifies what's stale, drafts every section that changed, and asks you to fill in the parts it can't know. 10 minutes instead of 45.
-
-Manual cadence for the rest:
-
-| Cadence | What to update |
-|---------|---------------|
-| Weekly | Run `/weekly-update` skill |
-| After every win/loss | Update `context/competitor-radar.md` win/loss patterns |
-| Quarterly | Review `context/icp-definition.md` — add an entry to the ICP evolution log |
-
----
-
-## What Not to Put in This Repo
-
-- **CRM data or contact lists** — never commit customer or prospect data to git
-- **API keys or credentials** — use environment variables, never hardcode
-- **Raw meeting transcripts** — summarize and synthesize into the relevant context file
-- **Pricing** — keep commercial terms out of the repo
-
----
-
-## Example
-
-`examples/sample-company/` is a fully built-out version of the repository for Relay, a fictional workflow automation platform. Every context file is populated. Two real sample outputs are included: an account research brief and a live campaign with email sequences and performance tracking.
-
-Use it as a reference when filling in your own files. The signal library in particular (`examples/sample-company/context/signal-library.md`) shows what a mature, data-backed signal library looks like — with detection methods, decay logic, performance tracking, and signal combination rules.
-
----
-
-## License
-
-MIT
+— 2026-06-22
