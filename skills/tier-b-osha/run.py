@@ -177,11 +177,12 @@ def phase_match() -> Path:
                 'source_title': sir['source_title'],
                 'nature_title': sir['nature_title'],
                 'inspection': sir['inspection'],
-                'evidence_url': (
-                    f'https://www.osha.gov/severe-injury-reports/{sir["osha_id"]}'
-                    if sir['osha_id'] else
-                    'https://www.osha.gov/severe-injury-reports/data'
-                ),
+                # OSHA SIRs don't have per-record URLs on osha.gov — the SIR data
+                # is a flat CSV + a Tableau dashboard. The dashboard URL is the
+                # canonical "see the data" target; the OSHA ID is shown in the
+                # UI so reviewers can search for the specific record inside.
+                # NOTE: /severe-injury-reports works (200); /severe-injury-reports/data is 404.
+                'evidence_url': 'https://www.osha.gov/severe-injury-reports',
                 'confidence': round(best[0], 3),
             })
         else:
@@ -225,12 +226,15 @@ def phase_merge() -> Path:
             hits.sort(key=lambda h: h['event_date'], reverse=True)
             top = hits[0]
             natures = sorted(set(h.get('nature_title', '') for h in hits if h.get('nature_title')))
+            ids = [h.get('osha_id', '') for h in hits if h.get('osha_id')]
             r['osha_severe_injury_count_24mo'] = len(hits)
             r['osha_first_evidence_url'] = top['evidence_url']
+            r['osha_first_evidence_id'] = top.get('osha_id', '')
             r['osha_first_evidence_date'] = top['event_date']
             r['osha_first_evidence_nature'] = top.get('nature_title', '')
             r['osha_first_evidence_event'] = top.get('event_title', '')
             r['osha_evidence_natures'] = '; '.join(natures[:5])
+            r['osha_evidence_ids'] = ', '.join(ids)
             r['osha_match_confidence'] = top.get('confidence', '')
             enriched += 1
             # lift Acute Need: 1 or 2 → 3 when count ≥ 1 (any SIR in 24mo is real signal)
