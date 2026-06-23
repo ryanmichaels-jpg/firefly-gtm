@@ -107,7 +107,7 @@ def main():
                 'forge_event': event,
                 'forge_gravity': gravity,
                 'forge_tier': forge_tier,
-                'enrichment_tier': r.get('enrichment_tier', 'A'),
+                'enrichment_tier': r.get('enrichment_tier', 'C'),
                 'mandate_name': (r.get('mandate_name') or '').strip(),
                 'mandate_status': mandate_status,
                 'mandate_status_display': display_status,

@@ -691,7 +691,7 @@ def step_8_tier_and_mart() -> Path:
         else:
             c.append(0)
         r['confidence'] = round(sum(c) / max(len(c), 1), 2) if c else None
-        r['enrichment_tier'] = 'A'
+        r['enrichment_tier'] = 'C'
         r['last_enriched_at'] = datetime.utcnow().isoformat() + 'Z'
         if not r.get('needs_review'):
             r['needs_review'] = False
