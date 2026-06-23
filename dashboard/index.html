@@ -1278,9 +1278,9 @@ const AGENTS = [
   { id: 'tam-builder', name: 'TAM Builder', color: '#5fd08a', status: 'REAL',
     needsInput: null,
     desc: 'Pulls CMS HGI → AHRQ → POS → NPPES → Census; outputs tam.csv (2,353 facilities).',
-    command: 'python3 skills/seed-tier-a/run.py --all',
-    artifact: 'skills/seed-tier-a/SKILL.md',
-    previewFile: 'skills/seed-tier-a/SKILL.md',
+    command: 'python3 skills/seed-tier-c/run.py --all',
+    artifact: 'skills/seed-tier-c/SKILL.md',
+    previewFile: 'skills/seed-tier-c/SKILL.md',
     stages: [
       [600, 'Loading CMS Hospital General Information (15 states)…'],
       [700, 'Filtering to 2,354 hospitals · deduping CCN+address…'],

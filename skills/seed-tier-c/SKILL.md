@@ -1,4 +1,4 @@
-# seed-tier-a — build the Firefly TAM (Tier-A, 15 states, all free)
+# seed-tier-c — build the Firefly TAM (Tier-A, 15 states, all free)
 
 Runs the corrected CMS-first seed recipe end-to-end. Produces `data/mart/tam.csv` — one row per hospital facility in the 15 priority mandate states.
 
@@ -25,13 +25,13 @@ WA, CA, NY, NJ, LA, FL, IL, TX, AZ, MA, NC, OR, CO, CT, MD — expected ~2,354 f
 
 ```bash
 # full pipeline, end-to-end
-python3 skills/seed-tier-a/run.py --all
+python3 skills/seed-tier-c/run.py --all
 
 # just one step (for verification / re-runs)
-python3 skills/seed-tier-a/run.py --step 1
+python3 skills/seed-tier-c/run.py --step 1
 
 # skip the NPPES + geocode network steps (offline rerun for tier logic etc.)
-python3 skills/seed-tier-a/run.py --skip nppes,geocode
+python3 skills/seed-tier-c/run.py --skip nppes,geocode
 ```
 
 ## Acceptance criteria (CLAUDE.md, locked)

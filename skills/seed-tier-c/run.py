@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""seed-tier-a: build data/mart/tam.csv for the 15 priority mandate states.
+"""seed-tier-c: build data/mart/tam.csv for the 15 priority mandate states.
 
 One file, eight ordered idempotent steps. Each step reads the prior staging
 file and writes its own — so re-running a single step is safe and cheap.
 
 Run:
-    python3 skills/seed-tier-a/run.py --all
-    python3 skills/seed-tier-a/run.py --step 1
-    python3 skills/seed-tier-a/run.py --skip nppes,geocode
+    python3 skills/seed-tier-c/run.py --all
+    python3 skills/seed-tier-c/run.py --step 1
+    python3 skills/seed-tier-c/run.py --skip nppes,geocode
 """
 from __future__ import annotations
 import argparse
@@ -354,7 +354,7 @@ def step_5_nppes() -> Path:
     cache_dir.mkdir(parents=True, exist_ok=True)
     matched = ambiguous = unmatched = 0
     t0 = time.time()
-    with httpx.Client(headers={'User-Agent': 'firefly-gtm/seed-tier-a'}) as client:
+    with httpx.Client(headers={'User-Agent': 'firefly-gtm/seed-tier-c'}) as client:
         for i, r in enumerate(rows):
             cache_path = cache_dir / f'{r["ccn"]}.json'
             if cache_path.exists():
