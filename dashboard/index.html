@@ -900,9 +900,25 @@ function renderDrawer() {
           <div class="stat-row"><span>Name</span><span style="color:#6f6a5c;font-style:italic">redacted from public dashboard</span></div>
         ` : `<div class="empty">No EDM identified — NPPES unmatched at Tier A</div>`}
       </div>
+      ${r.osha_severe_injury_count_24mo ? `
+        <div class="section">
+          <div class="section-head">OSHA SEVERE INJURY REPORTS (last 24 mo)</div>
+          <div style="background:#19160e;border:1px solid #2a261d;border-radius:9px;padding:11px 13px;margin-bottom:8px">
+            <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:6px">
+              <span style="font-size:22px;font-weight:800;color:#ff6b5e;font-family:'JetBrains Mono',monospace">${r.osha_severe_injury_count_24mo}</span>
+              <span style="font-size:11.5px;color:#a39c8c">severe-injury report(s) on file</span>
+            </div>
+            <div class="stat-row"><span>Most recent</span><span>${escapeHtml(r.osha_first_evidence_date || '—')}</span></div>
+            ${r.osha_first_evidence_nature ? `<div class="stat-row"><span>Nature</span><span style="font-size:11px">${escapeHtml(r.osha_first_evidence_nature)}</span></div>` : ''}
+            ${r.osha_evidence_natures && r.osha_severe_injury_count_24mo > 1 ? `<div class="stat-row"><span>All natures</span><span style="font-size:10.5px;color:#a39c8c">${escapeHtml(r.osha_evidence_natures)}</span></div>` : ''}
+            <div style="margin-top:8px"><a href="${r.osha_first_evidence_url}" target="_blank" style="font-size:11px;color:#5bb8d4;text-decoration:underline">OSHA SIR record →</a></div>
+          </div>
+          <div style="font-size:10.5px;color:#7d7565;font-style:italic">Acute Need lifted from proxy (AHRQ safety-net) to citation-grade (OSHA documented).</div>
+        </div>
+      ` : ''}
       <div class="section">
-        <div class="section-head">TIER-B FIELDS (deferred)</div>
-        <div class="empty">Incumbent vendor · contract expiry · named champion — resolve at Tier B (Apify + manual). Not enriched in this build.</div>
+        <div class="section-head">TIER-B FIELDS (partial)</div>
+        <div class="empty">Incumbent vendor · contract expiry · named champion — resolve at Tier B. ${r.osha_severe_injury_count_24mo ? 'OSHA enrichment populated above.' : (r.state === 'CA' || r.state === 'WA' || r.state === 'OR' || r.state === 'MD' || r.state === 'NC' ? 'OSHA gap: ' + r.state + ' is a state-plan OSHA state (federal SIR dataset excludes).' : 'No OSHA SIR match.')}</div>
       </div>
       ${r.is_qso_candidate && r.one_off_brief ? `
         <div class="section">

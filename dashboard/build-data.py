@@ -124,6 +124,13 @@ def main():
                 # Tier-B/C fields we don't have yet
                 'incumbent_vendor': None,
                 'contract_expiry': None,
+                # OSHA SIR enrichment (Tier-B, populated by skills/tier-b-osha)
+                'osha_severe_injury_count_24mo':
+                    _int(r.get('osha_severe_injury_count_24mo')) or None,
+                'osha_first_evidence_url': (r.get('osha_first_evidence_url') or '').strip() or None,
+                'osha_first_evidence_date': (r.get('osha_first_evidence_date') or '').strip() or None,
+                'osha_first_evidence_nature': (r.get('osha_first_evidence_nature') or '').strip() or None,
+                'osha_evidence_natures': (r.get('osha_evidence_natures') or '').strip() or None,
                 # one-off draft path for QSOs
                 'one_off_brief': None,
             }
