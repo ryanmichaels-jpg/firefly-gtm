@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: #100f0c; color: #f5f1e8; font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -229,6 +230,104 @@
   .stub-pane { padding: 40px 22px; max-width: 600px; }
   .stub-pane h3 { font-size: 16px; color: #f5f1e8; font-weight: 700; margin-bottom: 8px; }
   .stub-pane p { font-size: 13px; color: #a39c8c; line-height: 1.6; }
+
+  /* ===== CODE MODE ===== */
+  .code-shell { display: flex; height: 100%; min-height: 0; background: #100f0c; }
+  .code-sidebar { width: 280px; flex: none; background: #161309; border-right: 1px solid #221f18; overflow-y: auto; padding: 8px 4px; }
+  .code-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .code-header { flex: none; height: 42px; border-bottom: 1px solid #221f18; padding: 0 22px; display: flex; align-items: center; gap: 11px; background: #141209; }
+  .code-path { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #cfc8b8; }
+  .code-path .dim { color: #7d7565; }
+  .code-meta { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #6f6a5c; }
+  .code-content { flex: 1; overflow: auto; padding: 22px 28px; background: #100f0c; }
+  .code-empty { color: #6f6a5c; font-size: 13px; text-align: center; padding: 60px 20px; }
+  .code-md { max-width: 820px; color: #cfc8b8; font-size: 13.5px; line-height: 1.65; }
+  .code-md h1 { font-size: 22px; font-weight: 700; color: #f5f1e8; margin: 16px 0 8px; }
+  .code-md h2 { font-size: 16px; font-weight: 700; color: #f0ebdf; margin: 18px 0 6px; padding-top: 8px; border-top: 1px solid #221f18; }
+  .code-md h3 { font-size: 14px; font-weight: 700; color: #e3ddcf; margin: 14px 0 4px; }
+  .code-md p { margin: 8px 0; }
+  .code-md ul, .code-md ol { margin: 8px 0 8px 22px; }
+  .code-md li { margin: 4px 0; }
+  .code-md strong { color: #f0ebdf; font-weight: 700; }
+  .code-md em { color: #d8d2c4; }
+  .code-md code { background: #19160e; border: 1px solid #221f18; border-radius: 3px; padding: 1px 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9fe0ba; }
+  .code-md pre { background: #19160e; border: 1px solid #221f18; border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 12px 0; }
+  .code-md pre code { background: none; border: none; padding: 0; color: #cfc8b8; font-size: 12.5px; line-height: 1.55; }
+  .code-md a { color: #5bb8d4; text-decoration: underline; }
+  .code-md table { border-collapse: collapse; margin: 12px 0; font-size: 12.5px; max-width: 100%; }
+  .code-md th, .code-md td { border: 1px solid #221f18; padding: 6px 10px; text-align: left; }
+  .code-md th { background: #19160e; color: #e3ddcf; font-weight: 700; font-size: 11.5px; letter-spacing: 0.04em; }
+  .code-md hr { border: none; border-top: 1px solid #221f18; margin: 18px 0; }
+  .code-md blockquote { border-left: 3px solid #f6a429; padding: 4px 0 4px 14px; margin: 12px 0; color: #b4ac9b; font-style: italic; }
+  .code-pre { background: #19160e; border: 1px solid #221f18; border-radius: 8px; padding: 16px 20px; max-width: 1100px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; color: #cfc8b8; white-space: pre; tab-size: 4; }
+  .code-csv { max-width: 100%; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .code-csv table { border-collapse: collapse; width: 100%; }
+  .code-csv th, .code-csv td { border: 1px solid #221f18; padding: 6px 10px; text-align: left; white-space: nowrap; }
+  .code-csv th { background: #19160e; color: #c79a52; font-weight: 700; position: sticky; top: 0; }
+  .code-csv td { color: #cfc8b8; }
+  .code-csv .truncated-note { color: #7d7565; font-style: italic; padding: 8px 0; font-size: 11px; font-family: 'Hanken Grotesk', sans-serif; }
+
+  /* file tree */
+  .ft-dir { padding: 2px 0; }
+  .ft-dir-label { display: flex; align-items: center; gap: 5px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: #7d7565; cursor: pointer; user-select: none; }
+  .ft-dir-label:hover { color: #cfc8b8; }
+  .ft-dir.collapsed > .ft-children { display: none; }
+  .ft-dir-arrow { font-size: 9px; width: 10px; display: inline-block; }
+  .ft-children { padding-left: 14px; border-left: 1px solid #1c1912; margin-left: 8px; }
+  .ft-file { display: flex; align-items: center; gap: 6px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #a39c8c; cursor: pointer; border-radius: 4px; }
+  .ft-file:hover { color: #f0ebdf; background: #1d1a13; }
+  .ft-file.active { color: #f6a429; background: #221d12; }
+  .ft-file-icon { font-size: 10px; width: 12px; text-align: center; opacity: 0.7; }
+  .ft-file-size { margin-left: auto; font-size: 9.5px; color: #5f5a4e; }
+
+  /* ===== CHAT MODE ===== */
+  .chat-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; max-width: 800px; margin: 0 auto; padding: 24px 28px 0; }
+  .chat-greeting { font-size: 28px; font-weight: 700; color: #f5f1e8; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .chat-tagline { font-size: 13px; color: #8a8273; line-height: 1.55; margin-bottom: 22px; max-width: 580px; }
+  .chat-tagline strong { color: #c79a52; font-weight: 600; }
+  .chat-suggestions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; max-width: 700px; }
+  .chat-suggestion { display: flex; gap: 11px; align-items: flex-start; padding: 13px 14px; background: #161309; border: 1px solid #221f18; border-radius: 11px; cursor: pointer; transition: border-color .15s, background .15s; }
+  .chat-suggestion:hover { border-color: #3a2f1a; background: #1a160d; }
+  .chat-suggestion .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex: none; }
+  .chat-suggestion .text { flex: 1; font-size: 13px; color: #e3ddcf; line-height: 1.4; }
+  .chat-suggestion .text .sub { color: #7d7565; font-size: 11px; margin-top: 2px; }
+
+  .chat-conv { flex: 1; overflow-y: auto; padding: 4px 0 16px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .chat-msg { display: flex; max-width: 100%; }
+  .chat-msg.user { justify-content: flex-end; }
+  .chat-msg.user .bubble { background: #221d12; border: 1px solid #2c2718; max-width: 75%; }
+  .chat-msg.assistant .bubble { background: #19160e; border: 1px solid #221f18; max-width: 88%; }
+  .chat-msg.task .bubble { background: #161309; border: 1px dashed #2a261d; max-width: 88%; }
+  .bubble { padding: 12px 14px; border-radius: 11px; color: #e3ddcf; font-size: 13px; line-height: 1.55; }
+  .bubble strong { color: #f0ebdf; font-weight: 700; }
+  .bubble a { color: #5bb8d4; text-decoration: underline; }
+  .bubble .cards { display: grid; gap: 8px; margin-top: 10px; }
+  .bubble .card { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: #100f0c; border: 1px solid #2a261d; border-radius: 9px; cursor: pointer; transition: border-color .15s; }
+  .bubble .card:hover { border-color: #3a2f1a; background: #141209; }
+  .bubble .card .badge { font-size: 8.5px; font-weight: 800; letter-spacing: 0.05em; padding: 3px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; flex: none; margin-top: 1px; }
+  .bubble .card .card-text { flex: 1; }
+  .bubble .card .card-title { font-size: 12.5px; font-weight: 600; color: #f0ebdf; }
+  .bubble .card .card-sub { font-size: 11px; color: #7d7565; margin-top: 2px; }
+  .bubble .task-line { display: flex; align-items: center; gap: 9px; }
+  .bubble .task-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  .chat-input-bar { flex: none; display: flex; gap: 9px; padding: 12px 0 22px; align-items: center; border-top: 1px solid #221f18; margin-top: 6px; }
+  .chat-input { flex: 1; height: 40px; padding: 0 14px; background: #19160e; border: 1px solid #2a261d; border-radius: 10px; color: #e9e4d8; font-size: 13px; outline: none; }
+  .chat-input:focus { border-color: #3a2f1a; }
+  .chat-send { height: 40px; padding: 0 18px; background: #f6a429; border: none; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #1a1000; cursor: pointer; }
+  .chat-send:hover { background: #ffb944; }
+  .chat-spawn { height: 40px; padding: 0 13px; background: #19160e; border: 1px solid #2a261d; border-radius: 10px; color: #cfc8b8; font-size: 12px; cursor: pointer; }
+  .chat-spawn:hover { border-color: #3a2f1a; color: #f6a429; }
+
+  .spawn-modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 50; display: none; align-items: center; justify-content: center; }
+  .spawn-modal-mask.open { display: flex; }
+  .spawn-modal { width: 460px; max-height: 80vh; overflow-y: auto; background: #141209; border: 1px solid #2a261d; border-radius: 14px; padding: 20px 22px; }
+  .spawn-modal h3 { font-size: 14px; color: #f5f1e8; font-weight: 700; margin-bottom: 12px; }
+  .spawn-modal .agent { display: flex; gap: 11px; padding: 10px 12px; border-radius: 9px; cursor: pointer; border: 1px solid transparent; }
+  .spawn-modal .agent:hover { background: #19160e; border-color: #221f18; }
+  .spawn-modal .agent .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; flex: none; }
+  .spawn-modal .agent .name { font-size: 13px; font-weight: 600; color: #f0ebdf; }
+  .spawn-modal .agent .desc { font-size: 11px; color: #7d7565; margin-top: 1px; }
 </style>
 </head>
 <body>
@@ -368,8 +467,53 @@
       <div class="view scroll" data-view="campaigns"><div id="view-campaigns"></div></div>
       <div class="view scroll" data-view="accounts"><div id="view-accounts"></div></div>
       <div class="view" data-view="map" id="view-map"></div>
-      <div class="view" data-view="chat"><div class="stub-pane"><h3>Chat mode</h3><p>Decorative in the mockup — no chat backend wired. The runbook treats agents as <code>skills/</code> in this repo; spawning happens via Claude Code, not the dashboard.</p></div></div>
-      <div class="view" data-view="code"><div class="stub-pane"><h3>Code mode</h3><p>Decorative in the mockup — would show <code>firefly-gtm/</code> file tree + selected file. The real code lives in the repo at <code>~/Projects/firefly-gtm/</code>; reviewers can browse there directly.</p></div></div>
+      <div class="view" data-view="chat">
+        <div class="chat-shell">
+          <header>
+            <h2 class="chat-greeting" id="chat-greeting">Good morning, Ryan</h2>
+            <p class="chat-tagline">
+              Canned-but-clever interface to the engine. Pattern-matches your input
+              and surfaces real artifacts. For live LLM-powered agents,
+              <strong>spawn one</strong> below — the heavy work runs <em>locally</em> via Python
+              skills (Haiku 4.5 + Apify) and outputs commit to the repo.
+            </p>
+          </header>
+          <div class="chat-suggestions" id="chat-suggestions"></div>
+          <div class="chat-conv" id="chat-conv"></div>
+          <div class="chat-input-bar">
+            <input class="chat-input" id="chat-input" placeholder="Ask about a QSO, a mandate, an OSHA incident, FORGE …">
+            <button class="chat-send" id="chat-send">Send</button>
+            <button class="chat-spawn" id="chat-spawn">+ Spawn agent</button>
+          </div>
+        </div>
+      </div>
+      <div class="view" data-view="code">
+        <div class="code-shell">
+          <aside class="code-sidebar">
+            <div class="code-tree" id="code-tree"><div class="code-empty" style="padding:20px 8px">Loading…</div></div>
+          </aside>
+          <main class="code-main">
+            <header class="code-header">
+              <span class="code-path"><span class="dim">firefly-gtm/</span><span id="code-path-rest"></span></span>
+              <span class="code-meta" id="code-meta"></span>
+            </header>
+            <div class="code-content" id="code-content">
+              <div class="code-empty">
+                <strong style="display:block;font-size:14px;color:#cfc8b8;margin-bottom:6px">Select a file from the tree.</strong>
+                77 files embedded · markdown rendered · code as plain text.<br>
+                For the full repo: <a href="https://github.com/ryanmichaels-jpg/firefly-gtm" target="_blank" style="color:#5bb8d4">github.com/ryanmichaels-jpg/firefly-gtm</a>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+      <!-- spawn-agent modal -->
+      <div class="spawn-modal-mask" id="spawn-modal-mask">
+        <div class="spawn-modal" id="spawn-modal">
+          <h3>Spawn an agent</h3>
+          <div id="spawn-agent-list"></div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -982,6 +1126,795 @@ function wire() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
 }
 
+// =============== CODE MODE ==================
+let CODE = null;
+let CODE_CURRENT_PATH = null;
+
+function initCode() {
+  fetch('code.json').then(r => r.json()).then(d => {
+    CODE = d;
+    renderCodeTree();
+  }).catch(e => {
+    $('#code-tree').innerHTML = `<div class="code-empty" style="padding:20px 8px;color:#ff8a7e">code.json not found — run <code>python3 dashboard/build-code-tree.py</code></div>`;
+  });
+}
+
+function renderCodeTree() {
+  const root = CODE.tree;
+  const html = renderCodeNode(root, '');
+  $('#code-tree').innerHTML = html;
+  // wire click handlers
+  $$('.ft-dir-label').forEach(el => el.addEventListener('click', () => {
+    el.parentElement.classList.toggle('collapsed');
+  }));
+  $$('.ft-file').forEach(el => el.addEventListener('click', () => {
+    openCodeFile(el.dataset.path);
+  }));
+}
+
+function renderCodeNode(node, prefix) {
+  let html = '';
+  // dirs first, alphabetized
+  const dirs = Object.keys(node._dirs || {}).sort();
+  for (const d of dirs) {
+    const subPath = prefix ? prefix + '/' + d : d;
+    const child = node._dirs[d];
+    const collapsedClass = (d === 'context' || d === 'data' || d === 'dashboard' || d === 'skills' || d === 'documents' || d === 'docs' || d === 'diagrams') ? '' : 'collapsed';
+    html += `<div class="ft-dir ${collapsedClass}">
+      <div class="ft-dir-label"><span class="ft-dir-arrow">▾</span>${d}/</div>
+      <div class="ft-children">${renderCodeNode(child, subPath)}</div>
+    </div>`;
+  }
+  // then files, alphabetized
+  const files = (node._files || []).slice().sort((a, b) => a.name.localeCompare(b.name));
+  for (const f of files) {
+    const icon = f.ext === 'md' ? '◉' : f.ext === 'py' ? '⌬' : f.ext === 'csv' ? '▦' : f.ext === 'html' ? '◐' : f.ext === 'yaml' || f.ext === 'yml' ? '⌗' : '·';
+    const sizeKb = f.size > 1024 ? (f.size/1024).toFixed(0) + 'k' : f.size + 'b';
+    html += `<div class="ft-file" data-path="${escapeHtml(f.path)}" data-name="${escapeHtml(f.name)}">
+      <span class="ft-file-icon">${icon}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${escapeHtml(f.name)}</span>
+      <span class="ft-file-size">${sizeKb}</span>
+    </div>`;
+  }
+  return html;
+}
+
+function openCodeFile(path) {
+  if (!CODE || !CODE.files[path]) return;
+  CODE_CURRENT_PATH = path;
+  // mark active
+  $$('.ft-file').forEach(el => el.classList.toggle('active', el.dataset.path === path));
+  // update path bar
+  $('#code-path-rest').textContent = path;
+  const file = { path, content: CODE.files[path] };
+  const ext = (path.split('.').pop() || '').toLowerCase();
+  $('#code-meta').textContent = `${(file.content.length/1024).toFixed(1)} KB · ${ext}`;
+  let bodyHtml;
+  if (ext === 'md') {
+    // marked.js renders GitHub-flavored markdown
+    bodyHtml = `<div class="code-md">${window.marked.parse(file.content)}</div>`;
+  } else if (ext === 'csv') {
+    bodyHtml = renderCsv(file.content);
+  } else {
+    bodyHtml = `<pre class="code-pre">${escapeHtml(file.content)}</pre>`;
+  }
+  $('#code-content').innerHTML = bodyHtml;
+  $('#code-content').scrollTop = 0;
+}
+
+function renderCsv(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  const cap = 200;  // limit rendered rows for perf
+  const rows = lines.slice(0, cap).map(l => {
+    // simple CSV split (won't handle quoted commas perfectly but ok for browsing)
+    return parseCsvLine(l);
+  });
+  if (!rows.length) return '<div class="code-empty">empty file</div>';
+  const header = rows[0];
+  const body = rows.slice(1);
+  let html = '<div class="code-csv"><table><thead><tr>';
+  header.forEach(h => html += `<th>${escapeHtml(h)}</th>`);
+  html += '</tr></thead><tbody>';
+  body.forEach(r => {
+    html += '<tr>';
+    r.forEach(c => html += `<td>${escapeHtml(c)}</td>`);
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  if (lines.length > cap) html += `<div class="code-csv truncated-note">showing first ${cap} of ${lines.length} rows · open on GitHub for full file</div>`;
+  return html;
+}
+
+function parseCsvLine(line) {
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQuotes = !inQuotes; continue; }
+    if (c === ',' && !inQuotes) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// =============== CHAT MODE ==================
+const CHAT = {
+  conversation: [],   // list of {role, text, cards?}
+  pendingAgent: null, // {agent, needs} — set when spawn is waiting for user input
+};
+
+const STARTER_PROMPTS = [
+  {
+    color: '#f6a429',
+    text: 'Show my 5 QSOs',
+    sub: 'The hand-picked targets + auto-generated briefs',
+    intent: 'qsos',
+  },
+  {
+    color: '#5fd08a',
+    text: "What's hot in my 15 states?",
+    sub: 'High-signal facts: mandates · OSHA · QSO highlights',
+    intent: 'whats_hot',
+  },
+  {
+    color: '#9b8cff',
+    text: 'Mandate deadlines in 60 days',
+    sub: 'Upcoming mandates with deadline ≤ 60d',
+    intent: 'deadlines_60',
+  },
+  {
+    color: '#5bb8d4',
+    text: 'OSHA-tagged facilities',
+    sub: 'The 106 with documented severe-injury reports',
+    intent: 'osha',
+  },
+];
+
+// Each agent: real shell command, real durations (from actual runs), real cost,
+// real artifact path. Stages = [ms, text] tuples that animate during spawn.
+// needsInput: 'facility' | 'state' | null — prompts user before running.
+const AGENTS = [
+  { id: 'tam-builder', name: 'TAM Builder', color: '#5fd08a', status: 'REAL',
+    needsInput: null,
+    desc: 'Pulls CMS HGI → AHRQ → POS → NPPES → Census; outputs tam.csv (2,353 facilities).',
+    command: 'python3 skills/seed-tier-a/run.py --all',
+    artifact: 'skills/seed-tier-a/SKILL.md',
+    previewFile: 'skills/seed-tier-a/SKILL.md',
+    stages: [
+      [600, 'Loading CMS Hospital General Information (15 states)…'],
+      [700, 'Filtering to 2,354 hospitals · deduping CCN+address…'],
+      [600, 'Joining AHRQ Compendium (95.8% match) + CMS POS (99.8% beds)…'],
+      [700, 'NPPES enrichment cached · Census geocoder fast-path…'],
+      [500, 'Mandate-join + tier classification → tam.csv'],
+    ],
+    meta: '~25 min wall-clock on first run · subsequent runs use NPPES cache · $0',
+  },
+  { id: 'forge-scorer', name: 'FORGE Scorer', color: '#f6a429', status: 'REAL',
+    needsInput: null,
+    desc: 'Scores Fit · Acute × Event × Gravity → 0-27, assigns tier A/B/C/X.',
+    command: 'python3 skills/forge-score/run.py --all',
+    artifact: 'skills/forge-score/SKILL.md',
+    previewFile: 'skills/forge-score/SKILL.md',
+    stages: [
+      [400, 'Reading tam.csv (2,353 rows)…'],
+      [500, 'Phase 1: AHRQ safety-net proxy enrich…'],
+      [600, 'Phase 2: Acute × Event × Gravity scoring…'],
+      [400, 'Computing tiers: A=622 · B=426 · C=94 · X=1211 · writing tam_scored.csv'],
+    ],
+    meta: '~30 sec local · no API calls · $0',
+  },
+  { id: 'signal-scout-osha', name: 'Signal Scout (OSHA SIR)', color: '#5bb8d4', status: 'REAL',
+    needsInput: null,
+    desc: 'OSHA Severe Injury Reports → 106 facilities tagged · 59 lifted to citation-grade Acute Need.',
+    command: 'python3 skills/tier-b-osha/run.py --all',
+    artifact: 'skills/tier-b-osha/SKILL.md',
+    previewFile: 'skills/tier-b-osha/SKILL.md',
+    stages: [
+      [500, 'Loading OSHA SIR bulk CSV (105,318 records)…'],
+      [600, 'Filtering NAICS-622 hospitals in 10 federal-OSHA states (5 state-plan excluded)…'],
+      [500, 'Matching Employer → mart facility_name (fuzzy, threshold 0.60)…'],
+      [400, '193 incidents → 132 matched → 106 unique facilities tagged'],
+    ],
+    meta: 'CA/WA/OR/MD/NC excluded (state-plan OSHA — separate portals) · $0',
+  },
+  { id: 'account-researcher', name: 'Account Researcher', color: '#5bb8d4', status: 'REAL',
+    needsInput: 'facility',
+    desc: 'LLM-generated pre-call brief from mart row + signal stack.',
+    command: 'python3 skills/account-researcher/run.py --ccn 450046',
+    artifact: 'documents/qso-briefs/auto/qso-auto-450046-christus-spohn-hospital-corpus-christi.md',
+    previewFile: 'documents/qso-briefs/auto/qso-auto-450046-christus-spohn-hospital-corpus-christi.md',
+    stages: [
+      [400, 'Loading row for CCN 450046 (Christus Spohn, TX)…'],
+      [500, 'Composing system prompt with Firefly positioning + ICP…'],
+      [3200, 'Calling Anthropic Messages API (claude-haiku-4-5-20251001)…'],
+      [400, 'Writing markdown brief to documents/qso-briefs/auto/'],
+    ],
+    meta: 'Haiku 4.5 · 1,587 in / 1,349 out tokens · ~$0.008 · ~5s',
+  },
+  { id: 'one-off-writer', name: 'One-off Writer', color: '#f6a429', status: 'REAL',
+    needsInput: 'facility',
+    desc: 'LLM-drafts 80-125 word first-touch email from facility signals.',
+    command: 'python3 skills/one-off-writer/run.py --ccn 190064',
+    artifact: 'documents/qso-briefs/auto/one-off-190064-our-lady-of-the-lake-regional-medical-center.md',
+    previewFile: 'documents/qso-briefs/auto/one-off-190064-our-lady-of-the-lake-regional-medical-center.md',
+    stages: [
+      [400, 'Loading row for CCN 190064 (Our Lady of the Lake, LA)…'],
+      [500, 'Reading signal stack: OSHA + mandate + EDM title + beds…'],
+      [2400, 'Calling Anthropic API · max 600 tokens · firefly voice…'],
+      [300, '89 words generated. Writing to disk.'],
+    ],
+    meta: 'Haiku 4.5 · 844 in / 251 out tokens · ~$0.002 · ~3s',
+  },
+  { id: 'compliance', name: 'Compliance / Proof', color: '#5fd08a', status: 'REAL',
+    needsInput: 'state',
+    desc: 'Per-state mandate-conformance doc from mandates.csv + product spec.',
+    command: 'python3 skills/compliance/run.py --state WA',
+    artifact: 'documents/compliance/WA-washington.md',
+    previewFile: 'documents/compliance/WA-washington.md',
+    stages: [
+      [400, 'Loading mandates.csv (87 statutes) + product-coverage.yaml…'],
+      [500, 'For each priority state: classify requirement themes…'],
+      [400, 'Mapping themes → Firefly Ember/Lattice coverage matrix…'],
+      [400, '14 compliance docs generated (FL skipped — no state-specific mandate).'],
+    ],
+    meta: 'Template-based · NO LLM · deterministic · $0',
+  },
+  { id: 'qso-linkedin', name: 'QSO LinkedIn (Apify)', color: '#ff5cae', status: 'REAL',
+    needsInput: 'qso',  // restricted to the 5 hand-picked
+    desc: 'Tier-C only: Apify LinkedIn scrape for the 5 hand-picked QSOs.',
+    command: 'python3 skills/qso-linkedin/run.py --all-qsos',
+    artifact: 'documents/qso-briefs/auto/buying-committee-330101-newyork-presbyterian-hospital.md',
+    previewFile: 'documents/qso-briefs/auto/buying-committee-330101-newyork-presbyterian-hospital.md',
+    stages: [
+      [400, 'CLAUDE.md Tier-C gate: 5 hand-picked QSOs only…'],
+      [800, 'Calling Apify actor harvestapi/linkedin-company-employees…'],
+      [1500, 'Pulling 100 employees per company (5 companies × 60s each)…'],
+      [400, 'Classifying titles via title-patterns.yaml → buying-committee buckets'],
+      [300, '10 champions identified across 5 facilities (NYP: 4 incl. Mark Mac Donnell, Security Director)'],
+    ],
+    meta: 'Apify · "Full" mode ($8/1k profiles) · ~$4 total · ~5 min · CLAUDE.md Tier-C gate',
+  },
+  { id: 'displacement', name: 'Displacement Agent', color: '#7d7565', status: 'NOT_WIRED',
+    needsInput: null,
+    desc: 'Detect incumbent-vendor contract expiry → time displacement pitch.',
+    command: '(blocked — requires paid data feed)',
+    artifact: null,
+    previewFile: 'docs/SOURCES.md',
+    stages: [
+      [800, 'Attempting: SEC 10-K parsing for publicly-traded hospital systems…'],
+      [800, 'Attempting: state procurement portals (TX/NY/FL)…'],
+      [1200, 'Real-world answer: BidNet/GovWin subscription (~$200/mo) is the source GTM teams actually use.'],
+    ],
+    meta: 'Not wired this build. Path forward documented in docs/SOURCES.md.',
+  },
+];
+
+function greeting() {
+  const h = new Date().getHours();
+  const p = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+  return `Good ${p}, Ryan`;
+}
+
+function renderChatSuggestions() {
+  $('#chat-suggestions').innerHTML = STARTER_PROMPTS.map((p, i) => `
+    <div class="chat-suggestion" data-i="${i}">
+      <div class="dot" style="background:${p.color};box-shadow:0 0 8px ${p.color}"></div>
+      <div class="text"><div>${escapeHtml(p.text)}</div><div class="sub">${escapeHtml(p.sub)}</div></div>
+    </div>`).join('');
+  $$('.chat-suggestion').forEach(el => el.addEventListener('click', () => {
+    chatSubmit(STARTER_PROMPTS[+el.dataset.i].text);
+  }));
+}
+
+function renderChatConv() {
+  const conv = $('#chat-conv');
+  conv.innerHTML = CHAT.conversation.map(m => {
+    const cards = (m.cards || []).map(c => `
+      <div class="card" ${c.onClick ? `data-action='${JSON.stringify(c.action || {})}'` : ''}>
+        ${c.badge ? `<span class="badge" style="color:${c.badgeColor||'#f6a429'};background:${(c.badgeColor||'#f6a429')}22;border:1px solid ${(c.badgeColor||'#f6a429')}55">${escapeHtml(c.badge)}</span>` : ''}
+        <div class="card-text">
+          <div class="card-title">${c.titleHtml || escapeHtml(c.title || '')}</div>
+          ${c.sub ? `<div class="card-sub">${c.subHtml || escapeHtml(c.sub)}</div>` : ''}
+        </div>
+      </div>`).join('');
+    if (m.role === 'task') {
+      const stageList = (m.stages || []).map((s, i) => {
+        const done = i < (m.currentStage || 0) || m.done;
+        const active = i === (m.currentStage || 0) && !m.done;
+        const color = done ? '#5fd08a' : active ? '#c79a52' : '#3a3528';
+        const icon = done ? '✓' : active ? '◐' : '○';
+        return `<div style="display:flex;gap:8px;font-size:10.5px;color:${done?'#9fe0ba':active?'#cfc8b8':'#5f5a4e'};font-family:'JetBrains Mono',monospace;margin:1px 0">
+          <span style="color:${color};${active?'animation:ffpulsedot 1s ease-in-out infinite':''}">${icon}</span>
+          <span style="flex:1">${escapeHtml(s[1])}</span>
+        </div>`;
+      }).join('');
+      return `<div class="chat-msg task"><div class="bubble">
+        <div class="task-line" style="margin-bottom:8px">
+          <span class="task-dot" style="background:${m.color||'#f6a429'};box-shadow:0 0 8px ${m.color||'#f6a429'};${m.done?'opacity:0.7':'animation:ffpulse 1.4s ease-in-out infinite'}"></span>
+          <strong>${escapeHtml(m.agent)}</strong>
+          <span style="margin-left:auto;font-size:10px;color:${m.done?'#9fe0ba':'#c79a52'};font-family:'JetBrains Mono',monospace">${m.done?'done ✓':'running…'}</span>
+        </div>
+        ${m.command ? `<div style="background:#100f0c;border:1px solid #221f18;border-radius:6px;padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fe0ba;margin-bottom:8px">$ ${escapeHtml(m.command)}</div>` : ''}
+        ${stageList}
+        ${m.previewHtml || ''}
+        ${cards ? `<div class="cards">${cards}</div>` : ''}
+      </div></div>`;
+    }
+    return `<div class="chat-msg ${m.role}"><div class="bubble">
+      ${m.text ? m.text.split('\n').map(p => `<div>${p}</div>`).join('') : ''}
+      ${cards ? `<div class="cards">${cards}</div>` : ''}
+    </div></div>`;
+  }).join('');
+  conv.scrollTop = conv.scrollHeight;
+  // wire card click handlers
+  $$('#chat-conv .card[data-action]').forEach(el => el.addEventListener('click', () => {
+    const a = JSON.parse(el.dataset.action);
+    if (a.type === 'view' && a.view) { state.mode='cowork'; state.view=a.view; if(a.filter) Object.assign(state,a.filter); render(); }
+    if (a.type === 'url') window.open(a.url, '_blank');
+    if (a.type === 'account') { state.selected=a.ccn; renderDrawer(); }
+    if (a.type === 'prompt') chatSubmit(a.text);
+  }));
+}
+
+function pushChatMsg(m) {
+  CHAT.conversation.push(m);
+  renderChatConv();
+  // hide suggestions once conversation starts
+  if (CHAT.conversation.length > 0) $('#chat-suggestions').style.display = 'none';
+}
+
+function chatSubmit(text) {
+  text = text.trim(); if (!text) return;
+  pushChatMsg({ role: 'user', text: escapeHtml(text) });
+  $('#chat-input').value = '';
+  // if an agent is waiting for input, route this submission to the agent context
+  if (CHAT.pendingAgent) {
+    const { agent, needs } = CHAT.pendingAgent;
+    CHAT.pendingAgent = null;
+    setTimeout(() => resolveAgentInput(agent, needs, text), 280);
+    return;
+  }
+  setTimeout(() => respondToIntent(text), 280);
+}
+
+function resolveAgentInput(agent, needs, text) {
+  if (needs === 'facility' || needs === 'qso') {
+    // fuzzy-match against mart
+    const tokens = text.toLowerCase().split(/[\s,]+/).filter(t => t.length >= 3);
+    const candidates = (needs === 'qso')
+      ? DATA.rows.filter(r => r.is_qso_candidate)
+      : DATA.rows;
+    let best = null, bestScore = 0;
+    for (const r of candidates) {
+      const hay = (r.name + ' ' + (r.city || '') + ' ' + (r.parent_system || '')).toLowerCase();
+      const score = tokens.filter(t => hay.includes(t)).length;
+      if (score > bestScore) { bestScore = score; best = r; }
+    }
+    if (!best || bestScore === 0) {
+      pushChatMsg({ role: 'assistant',
+        text: needs === 'qso'
+          ? `Couldn't match <strong>"${escapeHtml(text)}"</strong> to one of the 5 hand-picked QSOs (Tier-C gate). Pick one:`
+          : `Couldn't find a facility matching <strong>"${escapeHtml(text)}"</strong> in the mart. Try a name like "harborview", "memorial hermann", "orlando health".`,
+        cards: needs === 'qso' ? qsoSelectionCards(agent) : [],
+      });
+      // re-prompt
+      CHAT.pendingAgent = { agent, needs };
+      return;
+    }
+    // confirm + spawn with context
+    pushChatMsg({ role: 'assistant',
+      text: `Resolved to <strong>${escapeHtml(best.name)}</strong> (${best.state}, CCN ${best.ccn}). Spawning…`,
+    });
+    setTimeout(() => spawnAgentWithContext(agent, { ccn: best.ccn, name: best.name, state: best.state }), 400);
+  } else if (needs === 'state') {
+    const STATES = { wa:'WA', washington:'WA', ca:'CA', california:'CA', ny:'NY', 'new york':'NY',
+      nj:'NJ', 'new jersey':'NJ', la:'LA', louisiana:'LA', fl:'FL', florida:'FL',
+      il:'IL', illinois:'IL', tx:'TX', texas:'TX', az:'AZ', arizona:'AZ',
+      ma:'MA', massachusetts:'MA', nc:'NC', 'north carolina':'NC', or:'OR', oregon:'OR',
+      co:'CO', colorado:'CO', ct:'CT', connecticut:'CT', md:'MD', maryland:'MD' };
+    const key = text.toLowerCase().trim();
+    const code = STATES[key] || (Object.values(STATES).includes(text.toUpperCase()) ? text.toUpperCase() : null);
+    if (!code) {
+      pushChatMsg({ role: 'assistant',
+        text: `Couldn't match <strong>"${escapeHtml(text)}"</strong> to one of the 15 priority states. Try a 2-letter code (WA, NY, TX) or full name (Washington, New York, Texas):`,
+        cards: Object.entries({WA:'#5fd08a',CA:'#f6a429',NY:'#9b8cff',NJ:'#5bb8d4',LA:'#ff5cae',IL:'#ffcf6b',TX:'#e0a04a',MA:'#5fd08a'}).map(([st, color]) => ({
+          title: st, sub: 'click to use', badge: 'STATE', badgeColor: color,
+          action: { type: 'prompt', text: st },
+        })),
+      });
+      CHAT.pendingAgent = { agent, needs };
+      return;
+    }
+    pushChatMsg({ role: 'assistant', text: `Resolved to <strong>${code}</strong>. Spawning…` });
+    setTimeout(() => spawnAgentWithContext(agent, { state: code }), 400);
+  }
+}
+
+function qsoSelectionCards(agent) {
+  // 5 QSO cards — clicking dispatches to chatSubmit('harborview') etc.
+  return [
+    { name: 'Harborview Medical Center (WA)', kw: 'harborview' },
+    { name: 'Clara Maass Medical Center (NJ)', kw: 'clara maass' },
+    { name: 'NewYork-Presbyterian Hospital (NY)', kw: 'nyp' },
+    { name: 'CHRISTUS Spohn — Corpus Christi (TX)', kw: 'christus spohn' },
+    { name: 'Our Lady of the Lake (LA)', kw: 'our lady of the lake' },
+  ].map(q => ({
+    title: q.name, sub: 'click to use as input', badge: 'QSO', badgeColor: '#f6a429',
+    action: { type: 'prompt', text: q.kw },
+  }));
+}
+
+function promptAgentForInput(agent) {
+  CHAT.pendingAgent = { agent, needs: agent.needsInput };
+  const which = agent.needsInput;
+  const text = (
+    which === 'facility' ? `<strong>${escapeHtml(agent.name)}</strong> needs a facility. Type a name (e.g. "harborview", "memorial hermann", "orlando health") or pick one of your QSOs:`
+    : which === 'qso' ? `<strong>${escapeHtml(agent.name)}</strong> is Tier-C gated — only runs on the 5 hand-picked QSOs. Pick one:`
+    : `<strong>${escapeHtml(agent.name)}</strong> needs a state (WA, CA, NY, NJ, LA, FL, IL, TX, AZ, MA, NC, OR, CO, CT, MD). Type a 2-letter code or full name:`
+  );
+  pushChatMsg({ role: 'assistant', text,
+    cards: (which === 'state')
+      ? Object.entries({WA:'#5fd08a',CA:'#f6a429',NY:'#9b8cff',TX:'#e0a04a',MA:'#5fd08a'}).map(([st, color]) => ({
+          title: st, sub: 'click to use', badge: 'STATE', badgeColor: color,
+          action: { type: 'prompt', text: st },
+        }))
+      : qsoSelectionCards(agent),
+  });
+}
+
+function respondToIntent(text) {
+  const lo = text.toLowerCase();
+  // pattern matching
+  if (/\bqso\b|hand.?pick|five qso|5 qso|top targets/i.test(lo)) return respondQsos();
+  if (/harborview/i.test(lo)) return respondQsoFile('500064', 'Harborview Medical Center');
+  if (/clara maass|rwjbarnabas/i.test(lo)) return respondQsoFile('310009', 'Clara Maass');
+  if (/ny.?presb|nyp\b|new york pres/i.test(lo)) return respondQsoFile('330101', 'NewYork-Presbyterian');
+  if (/christus|spohn/i.test(lo)) return respondQsoFile('450046', 'CHRISTUS Spohn');
+  if (/our lady|olol|truxillo|jackson/i.test(lo)) return respondQsoFile('190064', 'Our Lady of the Lake');
+  if (/what.?s hot|hot in|signals this week|fired/i.test(lo)) return respondWhatsHot();
+  if (/deadline|60 days|upcoming|days to/i.test(lo)) return respondDeadlines();
+  if (/osha|incident|injury|severe injury/i.test(lo)) return respondOsha();
+  if (/tier ?a|priority|top accounts|top 10/i.test(lo)) return respondTierA();
+  if (/forge|score|methodology|how do you score|rubric/i.test(lo)) return respondForge();
+  if (/source|data source|where|ingest/i.test(lo)) return respondSources();
+  if (/draft|one.off|email|outreach/i.test(lo)) return respondDraft(lo);
+  if (/mandate|statute|law|rcw|sb240|truxillo/i.test(lo)) return respondMandates();
+  if (/champion|buying|committee|edm|contact/i.test(lo)) return respondBuyingCommittee();
+  // fuzzy facility-name search — last resort before generic fallback
+  if (DATA) {
+    const tokens = text.toLowerCase().split(/[\s,]+/).filter(t => t.length >= 4);
+    if (tokens.length > 0) {
+      // score each row by # of tokens that appear in the facility name
+      const scored = DATA.rows.map(r => {
+        const hay = (r.name + ' ' + (r.city || '') + ' ' + (r.parent_system || '')).toLowerCase();
+        const score = tokens.filter(t => hay.includes(t)).length;
+        return { r, score };
+      }).filter(x => x.score > 0);
+      scored.sort((a, b) => b.score - a.score || (b.r.forge_total || 0) - (a.r.forge_total || 0));
+      if (scored.length > 0 && scored[0].score >= Math.min(2, tokens.length)) {
+        return respondFacilityMatches(text, scored.slice(0, 5).map(x => x.r));
+      }
+    }
+  }
+  // generic fallback — fix: make cards actually trigger their starter prompt
+  pushChatMsg({ role: 'assistant',
+    text: `I'm a canned-but-clever interface — I pattern-match on intent and surface real artifacts. I didn't match <strong>"${escapeHtml(text)}"</strong>. Try one of these (clickable):`,
+    cards: STARTER_PROMPTS.map(p => ({
+      title: p.text, sub: p.sub, badge: 'TRY',
+      badgeColor: p.color, action: { type: 'prompt', text: p.text },
+    })),
+  });
+}
+
+function respondFacilityMatches(query, matches) {
+  const top = matches[0];
+  const isQso = !!top.is_qso_candidate;
+  pushChatMsg({ role: 'assistant',
+    text: matches.length === 1
+      ? `Found <strong>${escapeHtml(top.name)}</strong> (${top.state}, CCN ${top.ccn}) in the mart.${isQso ? ' This is one of your 5 hand-picked QSOs.' : ''} ${top.osha_severe_injury_count_24mo ? `<strong style="color:#ff6b5e">OSHA: ${top.osha_severe_injury_count_24mo} severe-injury report(s) in last 24mo.</strong>` : ''}`
+      : `Found ${matches.length} facilities matching <strong>"${escapeHtml(query)}"</strong>. Top match: <strong>${escapeHtml(top.name)}</strong>.`,
+    cards: matches.map(r => ({
+      title: `${r.is_qso_candidate ? '★ ' : ''}${r.name} · ${r.state}`,
+      sub: `FORGE ${r.forge_total}/27 (${r.forge_tier}) · ${r.beds || '?'} beds · ${r.parent_system || 'Independent'}${r.osha_severe_injury_count_24mo ? ' · ' + r.osha_severe_injury_count_24mo + '× OSHA SIR' : ''}`,
+      badge: r.is_qso_candidate ? 'QSO' : `T${r.tier_num}`,
+      badgeColor: r.is_qso_candidate ? '#f6a429' : (r.tier_num === 1 ? '#ffcf6b' : r.tier_num === 2 ? '#e0883a' : '#9a7c52'),
+      action: { type: 'account', ccn: r.ccn },
+    })),
+  });
+}
+
+function _qsoCards() {
+  const QSOS = [
+    { ccn:'500064', name:'Harborview Medical Center', state:'WA', play:'Feb 14, 2026 ED rampage + RCW 49.19 In force' },
+    { ccn:'310009', name:'Clara Maass Medical Center', state:'NJ', play:"RWJBarnabas's 5-step WPV framework + 1199SEIU pressure" },
+    { ccn:'330101', name:'NewYork-Presbyterian Hospital', state:'NY', play:'TVTP-grant peer-leader · scale-out before NY 2027' },
+    { ccn:'450046', name:'CHRISTUS Spohn — Corpus Christi', state:'TX', play:'Nov 2024 dementia hoax + SB240 In force' },
+    { ccn:'190064', name:'Our Lady of the Lake', state:'LA', play:'Truxillo Act eponym + Jackson 2025 + lawsuit (Legal hold)' },
+  ];
+  return QSOS.map(q => ({
+    title: `★ ${q.name} (${q.state})`,
+    sub: q.play,
+    badge: 'QSO',
+    badgeColor: '#f6a429',
+    action: { type: 'account', ccn: q.ccn },
+  }));
+}
+
+function respondQsos() {
+  pushChatMsg({ role: 'assistant',
+    text: `Your 5 hand-picked QSOs — each has a hand-written brief in <code>documents/qso-briefs/</code> and an <strong>auto-generated brief + one-off + LinkedIn buying-committee</strong> in <code>documents/qso-briefs/auto/</code>. Click any to open the detail drawer.`,
+    cards: _qsoCards(),
+  });
+}
+
+function respondQsoFile(ccn, name) {
+  const row = DATA && DATA.rows.find(r => r.ccn === ccn);
+  if (!row) return;
+  pushChatMsg({ role: 'assistant',
+    text: `<strong>${escapeHtml(name)}</strong> · ${row.state} · ${row.beds || '?'} beds · FORGE ${row.forge_total}/27 (${row.forge_tier}) · mandate: ${row.mandate_status_display || '—'}${row.osha_severe_injury_count_24mo ? ` · <strong style="color:#ff6b5e">OSHA SIRs: ${row.osha_severe_injury_count_24mo}</strong>` : ''}`,
+    cards: [
+      { title: 'Open detail drawer', sub: 'Account snapshot + FORGE breakdown + OSHA evidence', badge: 'DETAIL', badgeColor: '#5bb8d4', action: { type: 'account', ccn } },
+      { title: 'Hand-written QSO brief', sub: `documents/qso-briefs/qso-N-*.md (5 of 5 wrote)`, badge: 'BRIEF', badgeColor: '#f6a429', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs' } },
+      { title: 'Auto-generated brief (Account Researcher · Haiku 4.5)', sub: `documents/qso-briefs/auto/qso-auto-${ccn}-*.md · ~$0.01 cost`, badge: 'AUTO', badgeColor: '#5fd08a', action: { type: 'url', url: `https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs/auto` } },
+      { title: 'LinkedIn buying committee (Apify Tier-C)', sub: `documents/qso-briefs/auto/buying-committee-${ccn}-*.md · classified by persona-derived patterns`, badge: 'COMMITTEE', badgeColor: '#ff5cae', action: { type: 'url', url: `https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs/auto` } },
+    ],
+  });
+}
+
+function respondWhatsHot() {
+  if (!DATA) return;
+  const upcoming12mo = DATA.rows.filter(r => r.mandate_status_display === 'Upcoming' && r.days_to_deadline != null && r.days_to_deadline <= 365 && r.forge_tier === 'A');
+  const oshaTagged = DATA.rows.filter(r => r.osha_severe_injury_count_24mo && r.forge_tier === 'A').sort((a,b) => (b.osha_severe_injury_count_24mo||0) - (a.osha_severe_injury_count_24mo||0));
+  const qsos = DATA.rows.filter(r => r.is_qso_candidate);
+  pushChatMsg({ role: 'assistant',
+    text: `Three high-signal cards from this week's mart:`,
+    cards: [
+      { title: `${upcoming12mo.length} Tier-A accounts with mandate deadline ≤ 12mo`, sub: 'Beat-the-clock window — filter the Accounts view', badge: 'MANDATE', badgeColor: '#9b8cff', action: { type: 'view', view: 'accounts', filter: { fMandate: 'Upcoming' } } },
+      { title: `${oshaTagged.length} Tier-A accounts with OSHA-documented WPV incidents`, sub: `Top hit: ${oshaTagged[0]?.name || '—'} (${oshaTagged[0]?.osha_severe_injury_count_24mo || 0} SIRs)`, badge: 'OSHA', badgeColor: '#ff6b5e', action: { type: 'account', ccn: oshaTagged[0]?.ccn } },
+      { title: `${qsos.length} hand-picked QSOs in active research`, sub: 'OLOL has active wrongful-death litigation — Legal review before outreach', badge: 'QSO', badgeColor: '#f6a429', action: { type: 'view', view: 'campaigns' } },
+    ],
+  });
+}
+
+function respondDeadlines() {
+  if (!DATA) return;
+  const within60 = DATA.rows.filter(r => r.mandate_status_display === 'Upcoming' && r.days_to_deadline != null && r.days_to_deadline > 0 && r.days_to_deadline <= 60);
+  pushChatMsg({ role: 'assistant',
+    text: within60.length
+      ? `<strong>${within60.length}</strong> Upcoming-mandate accounts have a deadline in the next 60 days. Opening filtered view…`
+      : `No Upcoming-mandate accounts have deadlines within 60 days. The earliest Upcoming deadlines are 7-18 months out (NY Ch.618/2025, MA H.4767, CO SB25-166).`,
+    cards: [
+      { title: 'Open Accounts → Upcoming mandates', sub: `Filtered to Upcoming · sorted by deadline asc`, badge: 'VIEW', badgeColor: '#f6a429', action: { type: 'view', view: 'accounts', filter: { fMandate: 'Upcoming' } } },
+    ],
+  });
+}
+
+function respondOsha() {
+  if (!DATA) return;
+  const tagged = DATA.rows.filter(r => r.osha_severe_injury_count_24mo).sort((a,b) => (b.osha_severe_injury_count_24mo||0) - (a.osha_severe_injury_count_24mo||0));
+  const top10 = tagged.slice(0, 10);
+  pushChatMsg({ role: 'assistant',
+    text: `<strong>${tagged.length}</strong> facilities have OSHA-documented severe-injury reports in the last 24 months. (5 of 15 priority states are state-plan OSHA and excluded from the federal SIR dataset.) Top 10:`,
+    cards: top10.map(r => ({
+      title: `${r.name} · ${r.state}`,
+      sub: `${r.osha_severe_injury_count_24mo} SIR(s) · most recent ${r.osha_first_evidence_date} · ${r.osha_first_evidence_nature || ''}`,
+      badge: `${r.osha_severe_injury_count_24mo}× SIR`, badgeColor: '#ff6b5e',
+      action: { type: 'account', ccn: r.ccn },
+    })),
+  });
+}
+
+function respondTierA() {
+  if (!DATA) return;
+  const ta = DATA.rows.filter(r => r.forge_tier === 'A').sort((a,b) => (b.forge_total||0) - (a.forge_total||0)).slice(0, 10);
+  pushChatMsg({ role: 'assistant',
+    text: `Top 10 Tier-A facilities by FORGE total:`,
+    cards: ta.map(r => ({
+      title: `${r.name} · ${r.state}`,
+      sub: `${r.beds || '?'} beds · ${r.parent_system || 'Independent'}`,
+      badge: `${r.forge_total}/27`, badgeColor: '#f6a429',
+      action: { type: 'account', ccn: r.ccn },
+    })),
+  });
+}
+
+function respondForge() {
+  pushChatMsg({ role: 'assistant',
+    text: `<strong>F.O.R.G.E. methodology:</strong><br><br>
+Fit is a gate (hospital type + capacity + mandate set). Then <strong>Acute × Event × Gravity</strong> — each 0-3, product 0-27.<br><br>
+<strong>Acute Need</strong>: AHRQ safety-net proxies (high-DSH, high-UC, major-teaching) → 1-2; OSHA-documented SIR in last 24mo → lifted to 3 (citation-grade).<br>
+<strong>Event</strong>: state-specific Upcoming ≤12mo OR In-force → 3; Upcoming >12mo → 2; federal-only fallback → 0.<br>
+<strong>Gravity</strong>: NPPES auth_official with exec title + 250+ beds + multi-facility system → 3; exec title alone → 2.<br><br>
+Never pre-call score Resolve or Clarity — those are confirm-on-call dimensions.`,
+    cards: [
+      { title: 'skills/forge-score/SKILL.md', sub: 'Full rubric + scoring code', badge: 'CODE', badgeColor: '#5bb8d4', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/blob/main/skills/forge-score/SKILL.md' } },
+    ],
+  });
+}
+
+function respondSources() {
+  pushChatMsg({ role: 'assistant',
+    text: `The engine pulls from <strong>6 free public sources</strong> at Tier-A: CMS HGI, AHRQ Compendium, CMS POS, NPPES, Census Geocoder, mandates.csv. Tier-B adds OSHA Severe Injury Reports (federal-OSHA states). Full inventory + what each gives us in docs/SOURCES.md.`,
+    cards: [
+      { title: 'docs/SOURCES.md', sub: 'Every source · what it gives us · where it lands · honest deferrals', badge: 'DOCS', badgeColor: '#5fd08a', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/blob/main/docs/SOURCES.md' } },
+    ],
+  });
+}
+
+function respondDraft(query) {
+  // try to match a facility name in the query
+  if (!DATA) return;
+  const tokens = query.split(/\s+/).filter(t => t.length > 3);
+  const matches = DATA.rows.filter(r => tokens.some(t => r.name.toLowerCase().includes(t)));
+  if (matches.length === 0) {
+    pushChatMsg({ role: 'assistant',
+      text: `I'd need a specific facility to draft a one-off for. The auto-generated one-offs for the 5 QSOs are in <code>documents/qso-briefs/auto/</code>. To generate a new one, run: <code>python3 skills/one-off-writer/run.py --ccn &lt;CCN&gt;</code>`,
+    });
+    return;
+  }
+  const r = matches[0];
+  pushChatMsg({ role: 'assistant',
+    text: `<strong>${escapeHtml(r.name)}</strong> · ${r.state} · FORGE ${r.forge_total}/27. ${r.is_qso_candidate ? 'This is a hand-picked QSO — both hand-written and auto-generated one-offs exist.' : 'Not in the hand-picked 5. To auto-draft, run: <code>python3 skills/one-off-writer/run.py --ccn ' + r.ccn + '</code>'}`,
+    cards: [
+      { title: 'Open in detail drawer', sub: 'See signals before drafting', badge: 'ACCOUNT', badgeColor: '#5bb8d4', action: { type: 'account', ccn: r.ccn } },
+    ],
+  });
+}
+
+function respondMandates() {
+  if (!DATA) return;
+  const states = DATA.metadata.state_mandate;
+  const items = Object.entries(states).sort(([a],[b]) => a.localeCompare(b));
+  pushChatMsg({ role: 'assistant',
+    text: `Primary WPV mandate per priority state (data/reference/mandates.csv):`,
+    cards: items.slice(0, 10).map(([st, m]) => ({
+      title: `${st} · ${m.name}`,
+      sub: `${m.status}${m.effective_date ? ' · eff ' + m.effective_date : ''}${m.days_to_deadline != null ? ' · ' + (m.days_to_deadline >= 0 ? m.days_to_deadline + 'd to' : (-m.days_to_deadline) + 'd since') : ''}`,
+      badge: m.status === 'In force' || m.status === 'Enforcement' ? 'IN FORCE' : 'UPCOMING',
+      badgeColor: m.status === 'Upcoming' ? '#f6a429' : '#5fd08a',
+      action: { type: 'view', view: 'accounts', filter: { fState: st } },
+    })),
+  });
+}
+
+function respondBuyingCommittee() {
+  pushChatMsg({ role: 'assistant',
+    text: `The 5 QSOs have buying-committee data scraped via Apify (Tier-C, $4 spend). Across them: <strong>10 named champions</strong> identified (Security Director / Patient Safety / WPV Coordinator titles).<br><br>NYP's <strong>Mark Mac Donnell (Security Director)</strong> is the goldmine — exactly the "otherwise-invisible role" the persona file flagged. Each QSO's classified buying committee is in <code>documents/qso-briefs/auto/buying-committee-&lt;ccn&gt;-*.md</code>.`,
+    cards: [
+      { title: 'Persona definitions', sub: 'context/personas/healthcare-champion.md + healthcare-edm.md', badge: 'CONTEXT', badgeColor: '#5bb8d4', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/context/personas' } },
+      { title: 'Title-pattern config', sub: 'skills/qso-linkedin/title-patterns.yaml · derived from persona files', badge: 'PATTERNS', badgeColor: '#5fd08a', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/blob/main/skills/qso-linkedin/title-patterns.yaml' } },
+    ],
+  });
+}
+
+function showSpawnModal() {
+  $('#spawn-agent-list').innerHTML = AGENTS.map(a => `
+    <div class="agent" data-id="${a.id}">
+      <div class="dot" style="background:${a.color};box-shadow:0 0 8px ${a.color}${a.status === 'NOT_WIRED' ? ';opacity:0.3' : ''}"></div>
+      <div style="flex:1">
+        <div class="name">${escapeHtml(a.name)} <span style="font-size:9px;font-family:'JetBrains Mono',monospace;color:${a.status === 'REAL' ? '#9fe0ba' : '#c79a52'};margin-left:6px">${a.status === 'REAL' ? '✓ REAL' : '✗ NOT WIRED'}</span></div>
+        <div class="desc">${escapeHtml(a.desc)}</div>
+      </div>
+    </div>`).join('');
+  $$('#spawn-agent-list .agent').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    const a = AGENTS.find(x => x.id === id);
+    closeSpawnModal();
+    // if parameterized + REAL, prompt for input; otherwise spawn immediately
+    if (a.status === 'REAL' && a.needsInput) {
+      promptAgentForInput(a);
+    } else {
+      spawnAgent(a);
+    }
+  }));
+  $('#spawn-modal-mask').classList.add('open');
+}
+function closeSpawnModal() { $('#spawn-modal-mask').classList.remove('open'); }
+
+// Spawn with resolved context (CCN or state) — adapts command + previewFile to match.
+function spawnAgentWithContext(agent, ctx) {
+  // build a per-context copy with command/preview adapted
+  const a = { ...agent };
+  if (ctx.ccn) {
+    a.command = a.command.replace(/--ccn \d+/, '--ccn ' + ctx.ccn);
+    // try to find a matching auto-generated artifact for THIS CCN
+    if (a.id === 'account-researcher') {
+      const match = CODE && Object.keys(CODE.files).find(p => p.includes(`qso-auto-${ctx.ccn}-`));
+      if (match) { a.artifact = match; a.previewFile = match; }
+    }
+    if (a.id === 'one-off-writer') {
+      const match = CODE && Object.keys(CODE.files).find(p => p.includes(`one-off-${ctx.ccn}-`));
+      if (match) { a.artifact = match; a.previewFile = match; }
+    }
+    if (a.id === 'qso-linkedin') {
+      const match = CODE && Object.keys(CODE.files).find(p => p.includes(`buying-committee-${ctx.ccn}-`));
+      if (match) { a.artifact = match; a.previewFile = match; }
+    }
+    // tag first stage with the resolved facility
+    if (ctx.name) {
+      a.stages = a.stages.map((s, i) => i === 0
+        ? [s[0], s[1].replace(/\(CCN \d+[^)]+\)/, `(CCN ${ctx.ccn}, ${ctx.state})`).replace(/^Loading row for CCN \d+/, `Loading row for ${ctx.name}`)]
+        : s);
+    }
+  }
+  if (ctx.state) {
+    a.command = a.command.replace(/--state \w+/, '--state ' + ctx.state);
+    const match = CODE && Object.keys(CODE.files).find(p => p.startsWith(`documents/compliance/${ctx.state}-`));
+    if (match) { a.artifact = match; a.previewFile = match; }
+  }
+  spawnAgent(a);
+}
+
+function spawnAgent(a) {
+  const taskId = 't' + Date.now();
+  // initial state: command line + first stage
+  pushChatMsg({
+    role: 'task', taskId, agent: a.name, color: a.color,
+    command: a.command, stages: a.stages, currentStage: 0, statusText: a.stages[0][1],
+    desc: '', done: false,
+  });
+  // animate through stages
+  let elapsed = 0;
+  a.stages.forEach((stage, i) => {
+    const [ms, text] = stage;
+    elapsed += ms;
+    setTimeout(() => {
+      const msg = CHAT.conversation.find(m => m.taskId === taskId);
+      if (!msg) return;
+      msg.currentStage = i;
+      msg.statusText = text;
+      renderChatConv();
+    }, elapsed);
+  });
+  // finalize
+  setTimeout(() => {
+    const msg = CHAT.conversation.find(m => m.taskId === taskId);
+    if (!msg) return;
+    msg.done = true;
+    msg.statusText = a.status === 'NOT_WIRED'
+      ? 'Cannot complete — source not wired.'
+      : `Artifact ready · ${a.meta || ''}`;
+    // preview snippet from code.json if available
+    let previewHtml = '';
+    if (a.previewFile && CODE && CODE.files[a.previewFile]) {
+      const txt = CODE.files[a.previewFile];
+      // first 8 non-blank lines, max 480 chars
+      const preview = txt.split('\n').filter(l => l.trim()).slice(0, 8).join('\n').slice(0, 480);
+      previewHtml = `<div style="margin-top:10px;padding:10px 12px;background:#100f0c;border:1px solid #221f18;border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.55;color:#a39c8c;white-space:pre-wrap;max-height:140px;overflow:hidden;position:relative">${escapeHtml(preview)}${txt.length > 480 ? '<div style="position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(transparent,#100f0c)"></div>' : ''}</div>`;
+    }
+    msg.previewHtml = previewHtml;
+    if (a.status === 'NOT_WIRED') {
+      msg.cards = [{
+        title: 'Why this agent is not wired',
+        sub: 'docs/SOURCES.md documents the cost/yield tradeoffs for incumbent-vendor signal',
+        badge: 'WHY',
+        badgeColor: '#7d7565',
+        action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/blob/main/docs/SOURCES.md' },
+      }];
+    } else {
+      msg.cards = [
+        { title: 'Open artifact', sub: a.artifact, badge: 'OUTPUT', badgeColor: a.color,
+          action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/blob/main/' + a.artifact } },
+        { title: 'View skill source', sub: 'skills/' + a.id + '/SKILL.md', badge: 'CODE', badgeColor: '#5bb8d4',
+          action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/skills' } },
+      ];
+    }
+    renderChatConv();
+  }, elapsed + 200);
+}
+
+function initChat() {
+  $('#chat-greeting').textContent = greeting();
+  renderChatSuggestions();
+  $('#chat-send').addEventListener('click', () => chatSubmit($('#chat-input').value));
+  $('#chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); chatSubmit($('#chat-input').value); }
+  });
+  $('#chat-spawn').addEventListener('click', showSpawnModal);
+  $('#spawn-modal-mask').addEventListener('click', e => { if (e.target.id === 'spawn-modal-mask') closeSpawnModal(); });
+}
+
 // init: load data.json
 fetch('data.json')
   .then(r => r.json())
@@ -1002,6 +1935,8 @@ fetch('data.json')
     $('#badge-qso').textContent = d.metadata.qualified;
     $('#seg-meta').textContent = `Cycle 04 · Q2 FY26 · synced ${d.metadata.generated_at}`;
     wire();
+    initCode();
+    initChat();
     render();
   })
   .catch(e => {

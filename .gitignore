@@ -46,3 +46,8 @@ dashboard/mockup/
 
 # Allow the PII-redacted dashboard data artifact (built from tam_scored.csv)
 !dashboard/data.json
+
+# Tier-C LinkedIn scrape outputs (contain real employee names — PII)
+# Local-only; the dashboard code mode shows the rest of the auto-briefs.
+documents/qso-briefs/auto/linkedin-*.json
+documents/qso-briefs/auto/buying-committee-*.md

@@ -1,0 +1,69 @@
+# Maps common WPV-mandate requirement themes → Firefly product coverage.
+# Pure data file consumed by skills/compliance/run.py — no logic here.
+
+themes:
+  written_program:
+    requirement_keywords: [program, plan, policy, written]
+    firefly_coverage: |
+      Not a product feature — but Ember + Lattice deployment generates the audit
+      trail, incident log, and risk-assessment data that a written WPV program
+      requires for documentation. Customers typically pair Firefly with their
+      internal HR / Safety team's policy template.
+
+  risk_assessment:
+    requirement_keywords: [risk assessment, audit, assessment]
+    firefly_coverage: |
+      Lattice gateway provides building-level coverage maps; Ember dashboard
+      surfaces incident heat-maps and gap analysis per unit. The data layer
+      directly feeds annual risk-assessment cycles.
+
+  panic_alert_system:
+    requirement_keywords: [panic, duress, alarm, alert, button]
+    firefly_coverage: |
+      Lattice panic buttons (wearable + fixed), resilient on a private no-IT
+      RF gateway (5-year battery, no WiFi dependency). Ember routes alerts
+      to nursing, security, and EMS with location + escalation logic.
+
+  mass_notification:
+    requirement_keywords: [mass notification, broadcast, alert system]
+    firefly_coverage: |
+      Ember mass-notification module — campus-wide push to clinical + admin
+      staff via badge, mobile, desktop, overhead. Tested per HSEEP standards.
+
+  detection:
+    requirement_keywords: [detection, gunshot, weapon]
+    firefly_coverage: |
+      Lattice gunshot detection (acoustic + IR), validated against shooter
+      detection performance standards. Ember confirms detection (reduces
+      false alarms) and routes to PD + on-site response.
+
+  training:
+    requirement_keywords: [training, education, curriculum]
+    firefly_coverage: |
+      Not Firefly's primary scope — typically delivered by training co's
+      (HSS, Crisis Prevention Institute, AVADE). Firefly integrates with
+      LMS for incident-driven training triggers.
+
+  incident_reporting:
+    requirement_keywords: [reporting, record, report incidents, log]
+    firefly_coverage: |
+      Ember incident log — auto-generates structured records per event with
+      timestamps, location, response actions, and outcome. Exports to OSHA
+      300 / state reporting formats.
+
+  ems_integration:
+    requirement_keywords: [emergency, EMS, response]
+    firefly_coverage: |
+      Direct EMS integration — Ember pushes structured incident data to
+      responding EMS / PD CAD systems. Reduces dispatch-to-arrival time.
+
+  drills_evacuation:
+    requirement_keywords: [drill, evacuation, mustering, roll call]
+    firefly_coverage: |
+      Ember mustering / roll-call module — RFID + manual confirmation of
+      staff and patient accountability during evacuation.
+
+  default:
+    firefly_coverage: |
+      Not directly addressed by Firefly's current Ember + Lattice scope —
+      may be covered via integration with adjacent vendors (LMS, EHR).

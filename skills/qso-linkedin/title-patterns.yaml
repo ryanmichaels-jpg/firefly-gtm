@@ -1,0 +1,103 @@
+# Title-pattern config for buying-committee classification.
+# Source-of-truth: derived from context/personas/healthcare-edm.md and
+# context/personas/healthcare-champion.md and context/buying-committee.md.
+#
+# NOT EMPIRICALLY VALIDATED against closed Firefly deals. These are persona-
+# derived heuristics. To validate: pull IAHSS member roster, compare to
+# titles actually held by real hospital security/safety leaders.
+#
+# Pattern matching is case-insensitive substring (no regex word boundaries —
+# "chief nursing" matches "Chief Nursing Officer" without escaping).
+# Classifier checks buckets in this order: cosponsor → champion → edm → influencer.
+
+cosponsor:
+  source: context/personas/healthcare-edm.md
+  rationale: |
+    Per the persona file: "CNO (Chief Nursing Officer) is the clinical co-sponsor
+    and the unlock — staff safety drives nurse retention." Sits between Champion
+    and EDM. Surfaced as its own bucket so reviewers see them without forcing a
+    choice.
+  patterns:
+    - cno
+    - chief nursing
+    - chief nurse
+
+champion:
+  source: context/personas/healthcare-champion.md
+  rationale: |
+    Per the persona: "Director/VP of Security & Safety or Chief Security Officer;
+    Director of Emergency Management; **Workplace Violence Program Coordinator**
+    (a new, mandate-driven role)." Plus LinkedIn-title-filter suggestions from
+    that file: Security, Emergency Management, Workplace Violence.
+  patterns:
+    # Security roles
+    - vp security
+    - vice president security
+    - director security
+    - director of security
+    - chief security
+    - security manager
+    - security officer
+    - security director
+    # Safety roles
+    - vp safety
+    - chief safety
+    - director safety
+    - director of safety
+    - safety officer
+    - patient safety
+    - director of patient safety
+    # Emergency management
+    - emergency management
+    - emergency manager
+    - director emergency
+    - director of emergency
+    # WPV-specific (mandate-driven new role)
+    - workplace violence
+    - wpv coordinator
+    - violence prevention
+
+edm:
+  source: context/personas/healthcare-edm.md + context/buying-committee.md
+  rationale: |
+    Per the persona/committee map: "COO/CFO; system VP Security/Support Services;
+    CNO co-sponsor" — note CNO is handled separately as cosponsor. EDM here is
+    the C-suite + system-level support-services VP.
+  patterns:
+    - ceo
+    - chief executive
+    - coo
+    - chief operating
+    - cfo
+    - chief financial
+    - president
+    - evp operations
+    - svp operations
+    - vp operations
+    - chief admin
+    - chief administrative
+    - vp support services
+    - vp of support services
+    - support services
+
+influencer:
+  source: persona-adjacent + common hospital org chart
+  rationale: |
+    People who shape the decision but typically don't own budget or write spec:
+    facilities (where security often reports), IT (integration burden),
+    risk/compliance (mandate alignment), CMO (clinical buy-in for nurse-safety pitch).
+  patterns:
+    - director facilities
+    - chief facilities
+    - vp facilities
+    - facilities manager
+    - director it
+    - cio
+    - chief information
+    - chief information officer
+    - risk manager
+    - chief risk
+    - compliance officer
+    - chief compliance
+    - cmo
+    - chief medical
