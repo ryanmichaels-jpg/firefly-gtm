@@ -7,8 +7,8 @@ Build a real, queryable TAM of U.S. **hospitals** in the priority mandate states
 
 ## Scope (locked)
 - **Vertical:** Healthcare = care-delivery providers (acute-care hospitals + behavioral health). Exclude payers/pharma/biotech/medtech HQ (those are "Corporate").
-- **Geography:** the **top ~15 mandate states** by enacted-mandate strength (from the ranked Coverage Grid): WA, CA, NY, NJ, LA, FL, IL, TX, AZ, MA, NC, OR, CO, CT, MD. ~3,000 hospital facilities.
-- **Grain:** one row = one **facility** (individual hospital/campus), with `parent_system_id` to roll up to the health system. NOT system-level, NOT building-level (building-level only in Tier-C recon for the 5 QSOs).
+- **Geography:** **All 50 states + DC** — ~5,362 hospital facilities. v1 was locked to the top 15 mandate states (WA, CA, NY, NJ, LA, FL, IL, TX, AZ, MA, NC, OR, CO, CT, MD); v2 expanded the universe so the HARD-GATE incident sweep + OSHA SIR could surface real events in non-priority states (the v2 5-QSO set includes VA, which wasn't in the original 15). Priority for FORGE Event scoring is still the in-force/upcoming mandate states.
+- **Grain:** one row = one **facility** (individual hospital/campus), with `parent_system_id` to roll up to the health system. NOT system-level, NOT building-level (building-level only in Tier-A recon for the 5 QSOs).
 
 ## Firefly context (1-paragraph)
 Firefly = unified AI + IoT physical-safety platform. **Ember** (software: digital twin, AI detection/response, EMS integration, mass notification, mustering) + **Lattice** (hardware: panic buttons, gunshot detection, resilient no-IT private-network gateway). Job-to-be-done: "Detect → Locate → Alert → Respond." Sells into mandate-driven verticals. **Primary moat to reinforce: trusted-standard / regulatory** (certified, validated, embedded). See `context/`.
@@ -39,7 +39,10 @@ Do NOT seed from NPPES first (it returns junk names, staffing agencies, duplicat
 ### Mandate-status logic (don't use a raw countdown)
 Mandates already in force break a `days_to_deadline` countdown (goes negative). Use `mandate_status` ∈ {Upcoming, In force, Enforcement}. WA RCW 49.19 is **In force** → sell on *enforcement risk / compliance now*, not "beat the clock." Future-dated mandates → countdown + "beat the clock" angle.
 
-## Field → source map (Tier A = all ~3,000, free)
+## Tier convention (FLIPPED in v2)
+v1 had **A = cheap/broad**, **C = deep/QSO**. v2 flipped letters so **A = best/deepest**, **C = broad/seed** (matches normal grading intuition). All code, CSVs, and dashboard use the v2 convention. Anywhere this file says "Tier A" now, it means QSO-grade (5 hand-picked); "Tier C" means the broad ~5,362 seed.
+
+## Field → source map (Tier C = all ~5,362, free)
 | Field | Source | Notes |
 |---|---|---|
 | name (DBA), legal_name, ccn, hospital_type, ownership, has_ED | CMS HGI | primary seed |
@@ -48,14 +51,14 @@ Mandates already in force break a `days_to_deadline` countdown (goes negative). 
 | beds | CMS POS/HCRIS | ICP-fit / ACV |
 | has_behavioral_unit | CMS POS / SAMHSA | |
 | lat, lng | Census geocoder | free |
-| mandate_*, days_to_deadline/status | mandates.csv | local join |
-Tier B/C (curated subset + 5 QSOs only): footprint (Maps), tech_stack/incumbent (Apify+vendor case studies), contract_expiry (SAM.gov/awards × testimonials), contacts/EDM (Prospeo/Apollo + 990s + IAHSS), recon/num_entrances (Street View).
+| mandate_*, days_to_deadline/status | mandates.csv | local join (all 50 + DC) |
+Tier B/A (curated subset + 5 QSOs only): footprint (Maps), tech_stack/incumbent (Indeed regex + Apify + vendor case studies), contract_expiry (USAspending direct + SAM.gov/awards × testimonials), contacts/EDM (Apify LinkedIn + 990s + IAHSS), recon/num_entrances (Street View).
 
 ## Depth gradient + COST GUARDRAILS
-- **Tier A (all ~3,000):** free sources only (CMS/NPPES/AHRQ/Census/mandates). Single-digit $.
-- **Tier B (~300–400 curated):** Maps footprint + tech-stack + contacts. Metered.
-- **Tier C (5 QSOs):** Apify + full contact enrichment + Street View recon, hand-validated.
-- **Apify and paid contact lookups run ONLY on the 5 QSOs (Tier C).** Never enrich all 3,000 with paid per-record tools. QA a sample before any at-scale paid run.
+- **Tier C (all ~5,362):** free sources only (CMS/NPPES/AHRQ/Census/mandates/OSHA SIR/USAspending). Single-digit $.
+- **Tier B (~300–400 curated):** Indeed regex incumbent detection + USAspending federal contracts + tech-stack signals. Free / low-metered.
+- **Tier A (5 QSOs):** Apify LinkedIn buying committees + full contact enrichment + Street View recon, hand-validated.
+- **Apify and paid contact lookups run ONLY on the 5 QSOs (Tier A).** Never enrich all ~5,362 with paid per-record tools. QA a sample before any at-scale paid run.
 
 ## Guardrails
 - **Never fabricate.** If a field is unknown, leave null + set `needs_review`. No invented vendors, beds, or contacts.
@@ -77,8 +80,17 @@ dashboard/ (static app reading data/mart/tam.csv: US map view + Clay-style list 
 ```
 
 ## Acceptance criteria (per run)
-- Row count ≈ expected hospital count for the 15 states; no duplicates (CCN-unique).
-- 100% of Tier-A rows have name (DBA), state, mandate_status, lat/lng.
+- Row count ≈ expected hospital count for all 50 states + DC (~5,362); no duplicates (CCN-unique).
+- 100% of seed (Tier-C) rows have name (DBA), state, mandate_status, lat/lng.
 - 0 fabricated values; unknowns = null + needs_review.
-- 5 QSOs fully enriched (contacts + recon + one-off draft) and is_qso_candidate=TRUE.
+- 5 QSOs (Tier-A) fully enriched (incident HARD GATE passed + contacts + one-off draft) and is_qso_candidate=TRUE.
 - Stop-and-confirm before any paid (Apify/contact) run.
+
+## Current 5 QSOs (v2 — post-incident-gate, std-ranked, locked 2026-06-24)
+1. **Richmond University Medical Center** (CCN 330028) — NY · std=100 · Mar 2024 rampage + OSHA SIR Dec 2024 · NY S5294-B eff 2026-09-18
+2. **St Barnabas Hospital / SBH** (CCN 330399) — NY · std=100 · OSHA SIR Sep 2025 psych nurse spinal fracture · NY S5294-B + Bronx >1M ED-LEO requirement
+3. **Blessing Hospital** (CCN 140015) — IL · std=82 · OSHA SIR Sep 2024 hallway charge head injury · IL HB3435 (PA 104-0306) signed 2025-08-15
+4. **Mary Washington Hospital** (CCN 490022) — VA · std=71.5 · Mar 2025 deputy attacked at hospital (Stafford SO release) · VA HB2269 eff 2025-07-01
+5. **Harborview Medical Center** (CCN 500064) — WA · std=64 · Feb 2026 ED rampage + arson · WA RCW 49.19 eff 2026-01-01
+
+Selection method: HARD GATE on on-site violent incident (not transported-to/hoax/cyber) + state-scope mandate + footprint floor (beds ≥ 150), ranked primarily by StandaloneScore desc. Mega-IDNs (std=0) capped at Tier-B. Full briefs + one-off drafts: `documents/qso-briefs/qso-{1..5}-*.md`.

@@ -1,6 +1,8 @@
-# seed-tier-c — build the Firefly TAM (Tier-A, 15 states, all free)
+# seed-tier-c — build the Firefly TAM (Tier-C broad seed, all 50 + DC, all free)
 
-Runs the corrected CMS-first seed recipe end-to-end. Produces `data/mart/tam.csv` — one row per hospital facility in the 15 priority mandate states.
+Runs the corrected CMS-first seed recipe end-to-end. Produces `data/mart/tam.csv` — one row per hospital facility across all 50 states + DC (~5,362 facilities). v1 was locked to 15 priority mandate states; v2 expanded to surface HARD-GATE incidents nationwide.
+
+**Tier convention** (v2 flipped letters): **Tier C = broad seed** (this skill), Tier B = curated middle, Tier A = the 5 QSOs.
 
 ## What it does
 

@@ -1,12 +1,14 @@
 # Data Sources
 
-Every source the Firefly GTM engine reads from, what it gives us, and where it lands. Updated **2026-06-22**.
+Every source the Firefly GTM engine reads from, what it gives us, and where it lands. Updated **2026-06-24**.
+
+> **Tier convention** (FLIPPED in v2): Tier C = broad seed (all ~5,362, free), Tier B = curated middle (300–400, free/low-metered), Tier A = the 5 QSOs (paid Apify + hand-validated). v1 had A↔C reversed; everything in this repo now uses the v2 convention.
 
 ---
 
 ## TL;DR
 
-The engine knows the following about each of the 2,353 facilities in our 15 priority states:
+The engine knows the following about each of the ~5,362 facilities across all 50 states + DC:
 
 - **Identity**: name, CCN, address, parent system, system size
 - **Capacity**: beds, ED flag, behavioral health flag, hospital type
@@ -16,13 +18,13 @@ The engine knows the following about each of the 2,353 facilities in our 15 prio
 - **Buyer surface**: NPPES authorized_official title (CEO/CFO/etc.)
 - **Score**: FORGE total + tier + rationale per dimension
 
-It does **not** yet know: incumbent vendor, contract expiry, recent incidents (per facility), OSHA citation history, named champion, verified buyer contacts, building footprint. For the 5 hand-picked QSOs, those gaps are filled by hand-research in `documents/qso-briefs/`.
+v2 added at-scale signals via tier-b skills (incumbent vendor regex via Indeed, federal contracts via USAspending, on-site violent-incident HARD GATE via news + OSHA SIR). What's still missing at scale: contract expiry, named security champion, building footprint. For the 5 hand-picked QSOs, those gaps are filled by hand-research + Apify LinkedIn in `documents/qso-briefs/`.
 
 ---
 
-## 1. Live-pulled sources (Tier-A pipeline)
+## 1. Live-pulled sources (Tier-C pipeline = broad seed)
 
-These are what `skills/seed-tier-a/run.py` ingests on every run. Output: `data/mart/tam.csv`.
+These are what `skills/seed-tier-c/run.py` ingests on every run. Output: `data/mart/tam.csv`.
 
 | # | Source | Endpoint | What we pull | What it tells us | Lands in |
 |---|---|---|---|---|---|
@@ -34,7 +36,7 @@ These are what `skills/seed-tier-a/run.py` ingests on every run. Output: `data/m
 | 6 | **mandates.csv** (hand-curated) | LegiScan + state statute URLs | mandate_name, status, effective_date per state | Is there a state WPV statute? In force / Upcoming / Enforcement? When? | `mandate_name`, `mandate_status`, `effective_date`. Entire FORGE Event dimension. |
 | 7 | **OSHA Severe Injury Reports** | osha.gov bulk ZIP | Employer, EventDate, Nature, Source, NAICS 622 incidents in last 24mo | Citation-grade WPV / staff-injury evidence at the facility. Lifts FORGE Acute Need from AHRQ proxy to documented federal-OSHA evidence. | `osha_severe_injury_count_24mo`, `osha_first_evidence_url`, `osha_first_evidence_date`, `osha_first_evidence_nature`. Lifts `acute_need` 1/2 → 3 for matched facilities. Federal-OSHA-only (5 of our 15 priority states are state-plan, excluded). |
 
-**Run**: `python3 skills/seed-tier-a/run.py --all` · **Cost**: $0 · **Wall-clock**: ~25 min (NPPES is the bottleneck)
+**Run**: `python3 skills/seed-tier-c/run.py --all` · **Cost**: $0 · **Wall-clock**: ~25 min (NPPES is the bottleneck)
 
 ## 2. Reference tables (hand-curated, in repo)
 
@@ -90,14 +92,16 @@ From `CLAUDE.md`:
 1. **Never fabricate.** Unknown fields are `null` + `needs_review=TRUE`.
 2. **Public data only. No PHI.**
 3. **Every signal carries a `*_source_url`.**
-4. **Paid contact tools reserved for Tier-C** under explicit gate.
+4. **Paid contact tools reserved for Tier-A** (the 5 QSOs) under explicit gate.
 
 ## How to regenerate
 
 ```bash
 # Re-pull + re-score from scratch
-python3 skills/seed-tier-a/run.py --all      # ~25 min
-python3 skills/forge-score/run.py --all      # ~30 sec
+python3 skills/seed-tier-c/run.py --all      # ~25 min (broad seed)
+python3 skills/forge-score/run.py --all      # ~30 sec (additive max 9 + std cap)
+python3 skills/tier-b-osha/run.py --all      # ~5 sec (OSHA SIR lift to citation-grade)
+python3 skills/tier-b-incident/run.py --all  # HARD GATE on-site violence classifier
 python3 dashboard/build-data.py              # ~5 sec
 ```
 

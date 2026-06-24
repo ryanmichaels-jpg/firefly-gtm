@@ -9,10 +9,10 @@
 - Home health / hospice: product mismatch (mobile lone-worker, no site hardware).
 
 ## Grain
-**One row = one facility** (individual hospital/campus), with `parent_system_id` to roll up to the health system. NOT system-level, NOT building-level (building-level only for the 5-QSO Tier-C recon).
+**One row = one facility** (individual hospital/campus), with `parent_system_id` to roll up to the health system. NOT system-level, NOT building-level (building-level only for the 5-QSO Tier-A recon).
 
 ## Geography
-Top ~15 mandate states by enacted-mandate strength: WA, CA, NY, NJ, LA, FL, IL, TX, AZ, MA, NC, OR, CO, CT, MD. ~3,000 hospital facilities. See `data/reference/coverage-grid-ranked.csv`.
+All 50 states + DC, ~5,362 hospital facilities. v1 was locked to the top 15 mandate states (WA, CA, NY, NJ, LA, FL, IL, TX, AZ, MA, NC, OR, CO, CT, MD); v2 expanded to surface OSHA SIR + HARD-GATE news incidents nationwide. Priority for FORGE Event scoring is still the in-force/upcoming mandate states. See `data/reference/coverage-grid-ranked.csv`.
 
 ## Fit tiers
 - **Tier 1:** larger acute-care hospitals + behavioral units, multi-building, in a mandate state, with exec sponsorship/budget signals.
@@ -22,5 +22,5 @@ Top ~15 mandate states by enacted-mandate strength: WA, CA, NY, NJ, LA, FL, IL, 
 ## Why facility-grain
 Mandates are by state (a system spans states with different laws); beds/ED/footprint are per hospital; each map dot = a hospital; deployments land-and-expand building-by-building. Keep `facilities_in_system` as the expansion signal.
 
-## TAM sizing (estimates — flag as such)
-~6,100 hospitals nationally; ~3,000 in the 15 states. Total cross-vertical addressable ~70–90k orgs; realistic ICP ~20–35k; act-now sliver low thousands. Sources: AHA, NCES, AHLA public counts.
+## TAM sizing (computed from the v2 seed)
+~5,362 hospitals across all 50 states + DC after dedup (this build's actual count). Total cross-vertical addressable ~70–90k orgs; realistic ICP ~20–35k; act-now sliver low thousands. Sources: CMS HGI (primary), AHA, NCES, AHLA public counts.

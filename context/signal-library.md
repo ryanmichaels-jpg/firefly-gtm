@@ -9,7 +9,7 @@ F.O.R.G.E. is what Sam reviews after a conversation. Signals predict which accou
 - **Resolve / No-Inaction:** earned on the call. **Do NOT score pre-call.**
 - **Gravity:** org sponsor + budget + EDM access. **Partially detectable.**
 - **Event / Force Function:** a deadline. **Highly detectable** (mandates).
-Score Fit as a gate → rank by Acute Need × Event × Gravity. Leave Resolve/Clarity as "confirm on call."
+Score Fit as a gate → rank by **Acute Need + Event + Gravity** (v2 is additive, max 9; v1 was multiplicative, max 27). Leave Resolve/Clarity as "confirm on call."
 
 ## Signal types (all public / firewall-safe), by FORGE pillar
 - **Mandate / regulatory clock** (Event) — LegiScan/NCSL + `mandates.csv`.
@@ -42,8 +42,8 @@ Do NOT seed from NPPES (junk names, duplicates, critical-access, no beds/ED/syst
 7. Mandate-join with status logic.
 8. Tier by bed count + type → deprioritize critical-access.
 
-## Depth gradient + cost guardrail
-- Tier A (all ~3,000): free sources only. Single-digit $.
-- Tier B (~300–400 curated): Maps footprint + tech-stack + contacts. Metered.
-- Tier C (5 QSOs): Apify + full contact + Street View recon, hand-validated.
-- Paid tools (Apify, contact lookups) run ONLY on the 5 QSOs.
+## Depth gradient + cost guardrail (v2 — letters flipped from v1)
+- **Tier C (all ~5,362, free):** CMS/NPPES/AHRQ/Census/mandates/OSHA SIR/USAspending. Single-digit $.
+- **Tier B (~300–400 curated):** Indeed regex incumbent + USAspending federal contracts + tech-stack signals. Free / low-metered.
+- **Tier A (5 QSOs):** Apify LinkedIn buying committees + full contact + Street View recon, hand-validated.
+- Paid tools (Apify, contact lookups) run ONLY on the 5 QSOs (Tier A).

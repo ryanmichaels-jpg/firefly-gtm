@@ -1,6 +1,6 @@
-# QSO 1 — Harborview Medical Center (Seattle, WA)
+# QSO 5 — Harborview Medical Center (Seattle, WA)
 
-**Status**: `is_qso_candidate=TRUE` · forge_total **27** · facility_tier **1** · forge_tier **A**
+**Status**: `is_qso_candidate=TRUE` · forge_tier **A** · StandaloneScore **64** · forge_total **9 / 9** (additive)
 
 ## Account at a glance
 
@@ -14,11 +14,13 @@
 | Ownership | Government — county / UW joint |
 | Safety-net flags (AHRQ) | high DSH ✓ |
 
-## FORGE rationale
+## FORGE rationale (additive · max 9)
 
-- **Acute = 3** — high-DSH urban safety-net + behavioral health unit (AHRQ proxy)
-- **Event = 3** — **WA RCW 49.19** (HB1162/SB5162 2025) **In force**, effective 2026-01-01; state plan ESH enforcement-mode
-- **Gravity = 3** — exec-title NPPES auth_official + 413 beds + 4-facility system
+- **Acute = 3** — Feb 14, 2026 ED rampage (patient attack on nurses + security, $100K in damage, criminal arson + assault charges) — verifiable on-site event, news-corroborated
+- **Event = 3** — **WA RCW 49.19** (HB1162/SB5162 2025) **In force**, effective 2026-01-01; state-plan WA L&I enforcement mode
+- **Gravity = 3** — exec-title NPPES auth_official + Apify-confirmed UW Medicine security-tech buyer (Shaun Geraghty)
+- **forge_total = 9 / 9** (max)
+- StandaloneScore = 64 — UW Medicine 4-facility system; below the std≥70 true-independent bar but kept in portfolio as the WA anchor with the freshest documented incident
 
 ## The signal that makes this a QSO
 
