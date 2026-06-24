@@ -1,0 +1,432 @@
+#!/usr/bin/env python3
+"""tier-b-incumbent: detect incumbent security/safety vendors at hospitals.
+
+Apify's framing of the problem (Gap 3): incumbent vendor + contract vintage
+lives in tactical text — Indeed job postings explicitly name systems
+("manages AtHoc deployment", "Familiarity with Genetec required"). USAspending
++ SAM.gov are blind to commercial security vendor relationships at private
+hospitals; this fills that gap.
+
+Strategy
+  1. For each facility, spawn ~3 targeted Apify Indeed searches per the
+     QUERY_TEMPLATES (systems / program / healthcare-tech axes)
+  2. Regex-match each job description body against the VENDOR_DICTIONARY
+  3. Persist matches per-CCN with evidence URLs + post dates
+
+About `legacy_signal=True` — DIAGNOSTIC ONLY, NOT ACTIONABLE
+  Apify's framing of "no signal = legacy stack = cold target" is correct
+  in theory but premature in practice:
+    - v1 (Indeed only) yields 100% legacy_signal=True on the 5 QSOs
+    - We KNOW some of these have incumbents (Inner Parish at OLOL); the
+      flag is a false-positive at v1
+    - Local integrators don't appear in any national-vendor dictionary,
+      AND they don't run national case studies
+  This field is logged for tuning + future re-evaluation once v2 (vendor
+  case studies + apify/website-content-crawler on hospital-district
+  board minutes) materially lifts the discriminating power. It MUST NOT
+  feed into ranking, sort, or QSO-candidate selection at v1.
+
+CLAUDE.md gate: Apify costs real money. --qsos default scope (5 hand-picked
+QSOs). --all asks stop-and-confirm.
+
+Costs (misceres/indeed-scraper, $0.005/result)
+  --qsos    5 facilities × ~20 jobs = ~$0.50
+  --all     1,147 facilities × ~20 jobs = ~$115 (would require confirm)
+
+Run:
+    python3 skills/tier-b-incumbent/run.py --ccn 330101
+    python3 skills/tier-b-incumbent/run.py --qsos
+    python3 skills/tier-b-incumbent/run.py --merge
+"""
+from __future__ import annotations
+import argparse
+import csv
+import json
+import os
+import re
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+import httpx
+
+ROOT = Path(__file__).resolve().parents[2]
+MART = ROOT / 'data' / 'mart'
+SCORED_MART = MART / 'tam_scored.csv'
+CACHE_DIR = ROOT / 'data' / 'raw' / 'incumbent' / 'by-ccn'
+
+APIFY_BASE = 'https://api.apify.com/v2'
+INDEED_ACTOR = 'misceres~indeed-scraper'
+HTTP_TIMEOUT = 60
+JOBS_PER_SEARCH = 15
+APIFY_POLL_SECONDS = 5
+APIFY_MAX_WAIT_SECONDS = 240
+
+# Targeted queries per facility, each spanning a distinct slice of the
+# vendor dictionary. Per Ryan's category mapping:
+#   q1 systems/integration → catches Lenel/CCURE/Genetec/Milestone/Avigilon/Brivo
+#   q2 program/platform    → catches Everbridge/Rave/AtHoc/Singlewire
+#   q3 healthcare-specific → catches CENTEGIX/Strongline/Stanley/Vocera + RTLS
+# Bare title-pattern alone won't surface vendors — we regex the description
+# body, not the title. This stays a low-hit-rate enrichment by design.
+QUERY_TEMPLATES = (
+    ('systems',     '{name} "security systems"'),
+    ('program',     '{name} "physical security"'),
+    ('healthcare',  '{name} "workplace violence"'),
+)
+
+# 5 hand-picked QSOs (matches qso-linkedin + tier-b-contracts)
+QSO_CCNS = {
+    '500064': 'Harborview Medical Center',
+    '310009': 'Clara Maass Medical Center',
+    '330101': 'NewYork-Presbyterian Hospital',
+    '450046': 'CHRISTUS Spohn Hospital — Corpus Christi',
+    '190064': 'Our Lady of the Lake Regional Medical Center',
+}
+
+
+# ============================================================================
+# Vendor dictionary
+# Per Ryan: skip guard services. Cover the systems Firefly displaces or
+# integrates with. Flag Firefly's direct competitors separately.
+# ============================================================================
+
+# regex pattern => (vendor display name, category, is_firefly_competitor)
+VENDOR_DICTIONARY: list[tuple[str, str, str, bool]] = [
+    # ── DURESS / WEARABLE PANIC (Firefly Lattice displacement targets) ──
+    (r'\bcentegix\b',                          'Centegix',          'duress',           True),
+    (r'\broar(?:\s+for\s+good)?\b',            'ROAR for Good',     'duress',           True),
+    (r'\breact\s+mobile\b',                    'React Mobile',      'duress',           True),
+    (r'\bstrongline\b',                        'Strongline',        'duress',           False),
+    (r'\bcognosos\b',                          'Cognosos',          'duress',           False),
+    (r'\bstanley\s+healthcare\b',              'Stanley Healthcare','duress',           False),
+
+    # ── MASS NOTIFICATION ──
+    (r'\beverbridge\b',                        'Everbridge',        'mass_notification',True),
+    (r'\brave(?:\s+mobile(?:\s+safety)?)?\b',  'Rave Mobile Safety','mass_notification',True),
+    (r'\bomnilert\b',                          'Omnilert',          'mass_notification',True),
+    (r'\bsinglewire\b',                        'Singlewire',        'mass_notification',False),
+    (r'\bathoc\b',                             'AtHoc',             'mass_notification',False),
+    (r'\bgenasys\b',                           'Genasys',           'mass_notification',False),
+    (r'\bnavigate\s*360\b',                    'Navigate360',       'mass_notification',True),
+
+    # ── GUNSHOT DETECTION (indoor / hospital-relevant — ShotSpotter
+    # is outdoor/municipal, intentionally excluded; same for SoundThinking) ──
+    (r'\bzero\s*eyes\b',                       'ZeroEyes',                'gunshot_detection',True),
+    (r'\bshooter\s+detection\s+systems\b',     'Shooter Detection Systems','gunshot_detection',True),
+    (r'\bsds\s+guardian\b',                    'Shooter Detection Systems','gunshot_detection',True),
+    (r'\beagl(?:\s+technology)?\b',            'EAGL Technology',         'gunshot_detection',False),
+    (r'\bamberbox\b',                          'AmberBox',                'gunshot_detection',False),
+    (r'\blattice\b',                           'Lattice (Firefly)',       'gunshot_detection',False),
+
+    # ── COMMS / CLINICAL ALERTING ──
+    (r'\bvocera\b',                            'Vocera',            'comms',            True),
+
+    # ── VMS / CAMERAS (integration layer; not direct displacement) ──
+    (r'\bgenetec\b',                           'Genetec',           'vms',              False),
+    (r'\bavigilon\b',                          'Avigilon',          'vms',              False),
+    (r'\bmilestone\s+(?:xprotect|systems)\b',  'Milestone',         'vms',              False),
+    (r'\bverkada\b',                           'Verkada',           'vms',              False),
+    (r'\baxis\s+communications\b',             'Axis',              'vms',              False),
+    (r'\bbosch(?:\s+security)?\b',             'Bosch',             'vms',              False),
+
+    # ── ACCESS CONTROL ──
+    (r'\bccure\s*9000\b',                      'Software House CCURE','access_control', False),
+    (r'\bsoftware\s+house\b',                  'Software House CCURE','access_control', False),
+    (r'\blenel\b',                             'Lenel',             'access_control',   False),
+    (r'\bhoneywell\s+prowatch\b',              'Honeywell ProWatch','access_control',   False),
+    (r'\bbrivo\b',                             'Brivo',             'access_control',   False),
+]
+
+# Compile once
+_COMPILED = [(re.compile(p, re.IGNORECASE), name, cat, is_comp)
+             for p, name, cat, is_comp in VENDOR_DICTIONARY]
+
+
+def scan_text(text: str) -> list[dict]:
+    """Return list of matched vendors. One entry per unique (name) per scan."""
+    if not text:
+        return []
+    found: dict[str, dict] = {}
+    for pat, name, cat, is_comp in _COMPILED:
+        m = pat.search(text)
+        if m:
+            if name not in found:
+                # capture a short snippet (40 chars around the match)
+                start = max(0, m.start() - 20); end = min(len(text), m.end() + 20)
+                snippet = text[start:end].replace('\n', ' ')
+                found[name] = {
+                    'vendor': name,
+                    'category': cat,
+                    'is_firefly_competitor': is_comp,
+                    'snippet': snippet,
+                }
+    return list(found.values())
+
+
+# ============================================================================
+# Apify call (Indeed scraper)
+# ============================================================================
+
+def run_indeed(client, position: str, max_items: int = JOBS_PER_SEARCH) -> list[dict]:
+    """Spawn one Indeed search via Apify. Returns list of job dicts."""
+    token = os.environ.get('APIFY_API_TOKEN')
+    if not token:
+        raise RuntimeError('APIFY_API_TOKEN missing from environment / .env')
+    payload = {
+        'position': position,
+        'maxItemsPerSearch': max_items,
+        'country': 'US',
+        'parseCompanyDetails': False,
+        'followApplyRedirects': False,
+        'saveOnlyUniqueItems': True,
+    }
+    r = client.post(f'{APIFY_BASE}/acts/{INDEED_ACTOR}/runs',
+                    params={'token': token}, json=payload, timeout=HTTP_TIMEOUT)
+    r.raise_for_status()
+    run = r.json()['data']
+    run_id = run['id']
+    waited = 0
+    while waited < APIFY_MAX_WAIT_SECONDS:
+        time.sleep(APIFY_POLL_SECONDS); waited += APIFY_POLL_SECONDS
+        run = client.get(f'{APIFY_BASE}/actor-runs/{run_id}',
+                         params={'token': token}, timeout=HTTP_TIMEOUT).json()['data']
+        if run['status'] in ('SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED-OUT'):
+            break
+    if run['status'] != 'SUCCEEDED':
+        raise RuntimeError(f'Indeed actor run {run_id} status={run["status"]}')
+    items = client.get(f'{APIFY_BASE}/datasets/{run["defaultDatasetId"]}/items',
+                      params={'token': token, 'format': 'json', 'clean': '1'},
+                      timeout=HTTP_TIMEOUT).json()
+    return items
+
+
+# ============================================================================
+# Per-facility enrich
+# ============================================================================
+
+def enrich_one(client, ccn: str, facility_name: str, state: str,
+               *, force: bool = False, verbose: bool = True) -> dict:
+    cache_path = CACHE_DIR / f'{ccn}.json'
+    if cache_path.exists() and not force:
+        if verbose: print(f'  [{ccn}] using cached {cache_path.relative_to(ROOT)}')
+        return json.loads(cache_path.read_text())
+
+    if verbose: print(f'  [{ccn}] indeed: 3 targeted queries on {facility_name!r} ({state})')
+    queries_log: list[dict] = []
+    jobs: list[dict] = []
+    seen_urls: set[str] = set()
+    for label, tmpl in QUERY_TEMPLATES:
+        q = tmpl.format(name=facility_name)
+        new_jobs = 0; new_vendor_hits = 0
+        try:
+            batch = run_indeed(client, q)
+            for j in batch:
+                u = j.get('url')
+                if u and u in seen_urls: continue
+                if u: seen_urls.add(u)
+                jobs.append(j); new_jobs += 1
+                # marginal-yield diagnostic: vendors found in THIS query's batch
+                if scan_text((j.get('description') or '') + '\n' + (j.get('positionName') or '')):
+                    new_vendor_hits += 1
+            if verbose:
+                print(f'    [{label:<11}] {q!r}: +{new_jobs} jobs, {new_vendor_hits} w/ vendor')
+        except Exception as e:
+            if verbose: print(f'    ! query {q!r} failed: {e}')
+        queries_log.append({'label': label, 'query': q,
+                            'new_jobs': new_jobs, 'jobs_with_vendor_hit': new_vendor_hits})
+
+    matches_by_vendor: dict[str, dict] = {}
+    job_evidence: list[dict] = []
+    earliest_post = None
+    for j in jobs:
+        desc = j.get('description') or ''
+        title = j.get('positionName') or j.get('title') or ''
+        # Scan title + description together
+        found = scan_text(title + '\n' + desc)
+        post_date = (j.get('postingDateParsed') or '').split('T')[0] or None
+        if found:
+            for f in found:
+                key = f['vendor']
+                if key not in matches_by_vendor or (
+                    post_date and (matches_by_vendor[key].get('first_seen') or '') < post_date
+                ):
+                    matches_by_vendor[key] = {**f,
+                        'first_seen': post_date,
+                        'job_url': j.get('url'),
+                        'job_title': title[:120],
+                    }
+            job_evidence.append({
+                'title': title[:120], 'company': j.get('company'),
+                'url': j.get('url'), 'posted': post_date,
+                'vendors': [f['vendor'] for f in found],
+            })
+        if post_date:
+            if earliest_post is None or post_date < earliest_post:
+                earliest_post = post_date
+
+    vendors = list(matches_by_vendor.values())
+    legacy = (len(jobs) > 0 and len(vendors) == 0)
+
+    # Pick a "primary" incumbent — Firefly competitor first, then earliest seen
+    primary = None
+    if vendors:
+        comps = [v for v in vendors if v.get('is_firefly_competitor')]
+        primary = (comps[0] if comps else vendors[0])
+
+    record = {
+        'ccn': ccn,
+        'facility_name': facility_name,
+        'state': state,
+        'queries': queries_log,
+        'jobs_scanned': len(jobs),
+        'earliest_job_post': earliest_post,
+        'vendors_found': vendors,
+        'job_evidence': job_evidence,
+        'primary_incumbent': primary,
+        'all_vendor_names': '; '.join(v['vendor'] for v in vendors),
+        'categories_found': sorted({v['category'] for v in vendors}),
+        'has_firefly_competitor': any(v.get('is_firefly_competitor') for v in vendors),
+        'legacy_signal': legacy,
+        'detection_attempted': True,
+        'scraped_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+    }
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(json.dumps(record, indent=2))
+    if verbose:
+        if vendors:
+            print(f'    {len(jobs)} jobs scanned · vendors: {record["all_vendor_names"]}')
+        elif legacy:
+            print(f'    {len(jobs)} jobs scanned · NO known vendor mentions → legacy_signal=True')
+        else:
+            print(f'    {len(jobs)} jobs scanned · 0 jobs returned')
+    return record
+
+
+# ============================================================================
+# Mart merge
+# ============================================================================
+
+INCUMBENT_COLS = [
+    'incumbent_detection_attempted',
+    'incumbent_jobs_scanned',
+    'incumbent_primary_vendor',
+    'incumbent_primary_category',
+    'incumbent_all_vendors',
+    'incumbent_categories',
+    'incumbent_has_firefly_competitor',
+    'incumbent_legacy_signal',
+    'incumbent_evidence_url',
+    'incumbent_inferred_vintage_year',
+]
+
+
+def merge_into_mart() -> int:
+    if not SCORED_MART.exists():
+        print(f'  ! {SCORED_MART} not found — run forge-score first.'); return 1
+    if not CACHE_DIR.exists():
+        print(f'  ! cache empty — run enrich first.'); return 1
+    cached = {}
+    for f in CACHE_DIR.glob('*.json'):
+        try:
+            d = json.loads(f.read_text()); cached[d['ccn']] = d
+        except (KeyError, json.JSONDecodeError):
+            continue
+    with SCORED_MART.open(newline='') as fh:
+        rows = list(csv.DictReader(fh))
+    fields = list(rows[0].keys()) if rows else []
+    for c in INCUMBENT_COLS:
+        if c not in fields: fields.append(c)
+    populated = 0
+    for r in rows:
+        d = cached.get(r['ccn'])
+        if not d:
+            for c in INCUMBENT_COLS: r.setdefault(c, '')
+            continue
+        populated += 1
+        primary = d.get('primary_incumbent') or {}
+        r['incumbent_detection_attempted'] = 'True'
+        r['incumbent_jobs_scanned'] = d.get('jobs_scanned', 0)
+        r['incumbent_primary_vendor'] = primary.get('vendor') or ''
+        r['incumbent_primary_category'] = primary.get('category') or ''
+        r['incumbent_all_vendors'] = d.get('all_vendor_names') or ''
+        r['incumbent_categories'] = '; '.join(d.get('categories_found') or [])
+        r['incumbent_has_firefly_competitor'] = 'True' if d.get('has_firefly_competitor') else 'False'
+        r['incumbent_legacy_signal'] = 'True' if d.get('legacy_signal') else 'False'
+        r['incumbent_evidence_url'] = (primary.get('job_url') if primary else None) or ''
+        # Vintage from first-seen post date (Apify's heuristic)
+        first_seen = (primary or {}).get('first_seen') or d.get('earliest_job_post') or ''
+        r['incumbent_inferred_vintage_year'] = first_seen[:4] if first_seen else ''
+    with SCORED_MART.open('w', newline='') as fh:
+        w = csv.DictWriter(fh, fieldnames=fields)
+        w.writeheader(); w.writerows(rows)
+    print(f'  → merged {populated} cached records into {SCORED_MART.relative_to(ROOT)}')
+    return 0
+
+
+def _load_facility(ccn: str) -> Optional[dict]:
+    if not SCORED_MART.exists():
+        return None
+    with SCORED_MART.open(newline='') as fh:
+        for r in csv.DictReader(fh):
+            if r['ccn'] == ccn:
+                return r
+    return None
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    g = ap.add_mutually_exclusive_group(required=True)
+    g.add_argument('--ccn', help='Enrich one facility')
+    g.add_argument('--qsos', action='store_true', help='Enrich the 5 hand-picked QSOs')
+    g.add_argument('--all', action='store_true', help='Enrich every forge_tier A facility (asks confirm)')
+    g.add_argument('--merge', action='store_true', help='Merge cached records into tam_scored.csv')
+    ap.add_argument('--force', action='store_true', help='Ignore cache and re-scrape')
+    args = ap.parse_args()
+
+    if args.merge:
+        return merge_into_mart()
+
+    if not os.environ.get('APIFY_API_TOKEN'):
+        print('  ! APIFY_API_TOKEN missing from env. Source .env first:')
+        print('    set -a && . ./.env && set +a && python3 skills/tier-b-incumbent/run.py …')
+        return 1
+
+    with httpx.Client(headers={'User-Agent': 'firefly-gtm/tier-b-incumbent'}) as client:
+        if args.ccn:
+            row = _load_facility(args.ccn)
+            if not row:
+                print(f'  ! CCN {args.ccn} not found in mart'); return 1
+            enrich_one(client, args.ccn, row.get('facility_name', ''), row.get('state', ''),
+                       force=args.force)
+            return 0
+
+        if args.qsos:
+            print(f'tier-b-incumbent: enriching {len(QSO_CCNS)} hand-picked QSOs via Indeed')
+            for ccn, name in QSO_CCNS.items():
+                row = _load_facility(ccn)
+                state = row.get('state', '') if row else ''
+                fn = (row.get('facility_name', '') if row else '') or name
+                enrich_one(client, ccn, fn, state, force=args.force)
+            return 0
+
+        if args.all:
+            with SCORED_MART.open(newline='') as fh:
+                tier_a = [r for r in csv.DictReader(fh) if r.get('forge_tier') == 'A']
+            est_cost = len(tier_a) * JOBS_PER_SEARCH * 0.005
+            print(f'  Would enrich {len(tier_a)} forge_tier=A facilities.')
+            print(f'  Estimated cost: ~${est_cost:.0f} ({JOBS_PER_SEARCH} jobs/facility × $0.005/job).')
+            confirm = input('  Type ENRICH to confirm: ').strip()
+            if confirm != 'ENRICH':
+                print('  aborted'); return 1
+            for r in tier_a:
+                enrich_one(client, r['ccn'], r.get('facility_name', ''), r.get('state', ''),
+                           force=args.force)
+            return 0
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

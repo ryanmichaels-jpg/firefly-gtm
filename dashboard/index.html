@@ -1058,6 +1058,31 @@ function renderDrawer() {
         <div class="forge-row"><div class="lbl">Gravity</div><div class="bar"><div style="width:${(r.forge_gravity||0)/3*100}%"></div></div><div class="v">${r.forge_gravity}/3</div></div>
         <div class="stat-row" style="border-top:1px solid #221f18; margin-top:6px; padding-top:8px"><span>Tier</span><span><span class="${tierBadge(enr)}">${enr}</span>${r.forge_capped_to_b ? ' <span style="font-size:10.5px;color:#e0883a;margin-left:4px">capped</span>' : ''}</span></div>
       </div>
+      ${r.incumbent_detection_attempted ? `
+        <div class="section">
+          <div class="section-head">INCUMBENT VENDOR (Indeed scan · ${r.incumbent_jobs_scanned || 0} jobs)</div>
+          ${r.incumbent_primary_vendor ? `
+            <div style="margin-bottom:8px">
+              <span style="display:inline-block;padding:4px 10px;border-radius:9px;font-size:11px;font-weight:600;background:${r.incumbent_has_firefly_competitor?'#3a1e1d':'#1d3a26'};color:${r.incumbent_has_firefly_competitor?'#ff8a7e':'#5fd08a'}">
+                ${escapeHtml(r.incumbent_primary_vendor)} · ${escapeHtml(r.incumbent_primary_category || '')}${r.incumbent_has_firefly_competitor?' · DIRECT COMPETITOR':''}
+              </span>
+            </div>
+            ${r.incumbent_all_vendors && r.incumbent_all_vendors !== r.incumbent_primary_vendor ? `
+              <div class="stat-row"><span>All vendors found</span><span style="font-size:11px">${escapeHtml(r.incumbent_all_vendors)}</span></div>
+            ` : ''}
+            <div class="stat-row"><span>Categories</span><span>${escapeHtml(r.incumbent_categories || '—')}</span></div>
+            <div class="stat-row"><span>Inferred vintage</span><span>${escapeHtml(r.incumbent_inferred_vintage_year || '—')}</span></div>
+            ${r.incumbent_evidence_url ? `<div style="margin-top:6px"><a href="${r.incumbent_evidence_url}" target="_blank" style="color:#5bb8d4;font-size:11px">Evidence job posting →</a></div>` : ''}
+          ` : r.incumbent_legacy_signal ? `
+            <div style="background:#19160e;border:1px solid #2a261d;border-radius:9px;padding:11px 13px">
+              <div style="font-weight:600;color:#cfc8b8;font-size:12px">No incumbent detected yet</div>
+              <div style="font-size:11px;color:#8a8273;margin-top:4px">Scanned ${r.incumbent_jobs_scanned} security job postings · zero known vendors named in body text. <strong style="color:#cfc8b8">Indeed coverage is thin for hospital security IT roles; this is NOT a "cold target" signal.</strong> Local integrators (e.g. Inner Parish at OLOL) won't surface in national-vendor dictionaries. Wait for v2 (vendor case studies + board minutes) before treating absence-of-signal as actionable.</div>
+            </div>
+          ` : `
+            <div class="empty">No Indeed postings returned for this facility. Try alternate search terms or other sources (LinkedIn, press releases, IRS 990).</div>
+          `}
+        </div>
+      ` : ''}
       ${r.usa_award_count_5yr ? `
         <div class="section">
           <div class="section-head">FEDERAL RECIPIENT (USAspending · last 5y)</div>
@@ -1329,6 +1354,20 @@ const AGENTS = [
       [500, 'Mandate-join + tier classification → tam.csv'],
     ],
     meta: '~45-60 min wall-clock on first run · subsequent runs use NPPES cache · $0',
+  },
+  { id: 'incumbent-detector', name: 'Incumbent Detector', color: '#ff5cae', status: 'REAL',
+    needsInput: null,
+    desc: 'Apify Indeed scrape · regex vendor dictionary · flags Firefly competitors + legacy-stack signal.',
+    command: 'python3 skills/tier-b-incumbent/run.py --qsos && python3 skills/tier-b-incumbent/run.py --merge',
+    artifact: 'skills/tier-b-incumbent/run.py',
+    previewFile: 'skills/tier-b-incumbent/run.py',
+    stages: [
+      [600, '3 targeted Indeed queries per facility (systems, program, healthcare-tech)…'],
+      [800, 'Scraping ~15 jobs per query · ~$0.05/facility…'],
+      [400, 'Regex matching against vendor dictionary (Centegix, Everbridge, Genetec…)'],
+      [300, 'Tagging Firefly competitors · setting legacy_signal when zero hits'],
+    ],
+    meta: '~8 min for 5 QSOs · ~$1.10 total · Tier-A gate enforced',
   },
   { id: 'contracts-enricher', name: 'Federal Contracts', color: '#5fd08a', status: 'REAL',
     needsInput: null,
