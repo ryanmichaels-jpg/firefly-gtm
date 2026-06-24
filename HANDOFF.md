@@ -83,17 +83,17 @@ All 5 LinkedIn scrapes complete. Title-pattern classifier in `skills/qso-linkedi
 
 ## The finish list (next session priorities)
 
-**High-leverage builds (parked because external):**
+**Status of the three v2 items (verified this session):**
 
-1. **tier-b-contracts v2 — SAM.gov opportunities + recompete radar.** Code exists at `skills/tier-b-contracts/run.py`. Parked: SAM.gov public API quota ~10/day, unusable for at-scale enrichment. Resolution path: Ryan's existing SAM.gov key may give higher limits — verify limits before next build. Alternative: GSA Advantage or Bonfire might be more permissive.
-2. **tier-b-incumbent v2 — vendor case studies + board minutes via Apify RAG Web Browser.** `apify/rag-web-browser` is free compute, would scrape competitor case-study pages + public hospital board minutes for incumbent vendor names. Tested feasibility this session; not yet wired into a skill.
-3. **OSHA state-plan scraper (CA, WA, OR, MD, NC).** Federal SIR dataset excludes state-plan states. Each has its own enforcement portal. Closes the visible gap for Harborview (WA) — currently we use direct news evidence, but state-plan OSHA records would be more authoritative.
-4. **IRS 990 narrative grep.** Requires IRS S3 e-file XML + parser (~3-4 hr build). Check if an existing Apify actor does this cleaner.
+1. **tier-b-contracts v2 — SAM.gov opportunities + recompete radar.** Execution plan written: `skills/tier-b-contracts/V2_PLAN.md`. SAM.gov key in `.env` verified valid; quota exhausted today (HTTP 429: "You can access API after 2026-Jun-25 00:00:00+0000 UTC"). Path A in the plan (USAspending recompete radar) is buildable without SAM.gov but requires re-pulling period_of_performance fields the v1 cache didn't capture (~30 min focused work). Path B (SAM.gov active opps) executes after midnight UTC tonight.
+2. **tier-b-incumbent v2 — vendor case studies via Apify RAG Web Browser.** Execution plan written: `skills/tier-b-incumbent/V2_PLAN.md`. 8 vendor case-study URLs identified (CENTEGIX, Status Solutions, Strongline, Vocera, Singlewire, Rave, Motorola, AtHoc). LLM extraction prompt drafted. Path A (case studies) is 30–45 min focused work. Path B (board minutes, public-district subset) is deferred to v2.5 — harder + lower yield.
+3. **Full PII-redacted TAM** — ✓ shipped this session (`data/mart/tam_scored_redacted.csv`, 5,362 rows, 37 cols).
 
-**Housekeeping:**
+**Other open items (lower priority):**
 
-5. **Commit full PII-redacted TAM to GitHub** (TaskList #7). The current committed sample is 170 rows; should generate a full-mart redacted CSV for portfolio review.
-6. **Weekly refresh loop.** Operational, not portfolio-critical. Re-run signal sweep weekly; feed outcomes back to re-weight scoring.
+4. **OSHA state-plan scraper (CA, WA, OR, MD, NC).** Federal SIR dataset excludes state-plan states. Each has its own enforcement portal. Closes the visible gap for Harborview (WA) — currently we use direct news evidence, but state-plan OSHA records would be more authoritative.
+5. **IRS 990 narrative grep.** Requires IRS S3 e-file XML + parser (~3-4 hr build). Check if an existing Apify actor does this cleaner.
+6. **Weekly refresh loop.** Operational, not portfolio-critical.
 
 ---
 
