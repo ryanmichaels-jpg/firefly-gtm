@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import re
 import sys
 import time
@@ -51,15 +52,27 @@ HTTP_TIMEOUT = 30
 INTER_REQUEST_DELAY = 0.10      # USAspending tolerates ~10 req/sec easily
 MATCH_THRESHOLD_OK = 0.70       # similarity below this → flag for review
 
+# SAM.gov (v2)
+SAM_LOOKBACK_DAYS = 90          # active opps posted in last N days
+SAM_NAICS_SECURITY = (
+    '561612',   # Security Guards and Patrol Services
+    '561621',   # Security Systems Services
+    '561690',   # Other Investigation/Security Services
+    '334290',   # Other Communications Equipment Mfg (mass-notification gear)
+    '541512',   # Computer Systems Design Services
+)
+SAM_INTER_REQUEST_DELAY = 1.0   # SAM Public API is 1k requests/day — be polite
+
 USA_API = 'https://api.usaspending.gov/api/v2'
+SAM_API = 'https://api.sam.gov'
 
 # 5 hand-picked QSOs (immutable — matches qso-linkedin)
 QSO_CCNS = {
+    '330028': 'Richmond University Medical Center',
+    '330399': 'St Barnabas Hospital',
+    '140015': 'Blessing Hospital',
+    '490022': 'Mary Washington Hospital',
     '500064': 'Harborview Medical Center',
-    '310009': 'Clara Maass Medical Center',
-    '330101': 'NewYork-Presbyterian Hospital',
-    '450046': 'CHRISTUS Spohn Hospital — Corpus Christi',
-    '190064': 'Our Lady of the Lake Regional Medical Center',
 }
 
 # Suffixes we strip to improve recipient-name search hit-rate.
@@ -176,6 +189,83 @@ def search_awards(client, recipient_name: str, start_date: str, end_date: str,
     for r in contracts: r['_class'] = 'contract'
     for r in grants:    r['_class'] = 'assistance'
     return contracts + grants
+
+
+# ============================================================================
+# SAM.gov opportunities (v2)
+# ============================================================================
+
+def search_sam_opportunities(client, state: str, lookback_days: int = SAM_LOOKBACK_DAYS,
+                             api_key: Optional[str] = None) -> list[dict]:
+    """Active opportunities posted in the last N days in the given state, filtered
+    to security-relevant NAICS codes. Note: SAM.gov 'state' filter is the
+    CONTRACTING OFFICE state, not place-of-performance. For most cases (state
+    procurement, federal-in-state offices) this is what we want.
+    """
+    if not api_key or not state:
+        return []
+    end = date.today()
+    start = end - timedelta(days=lookback_days)
+    fmt = lambda d: f'{d.month:02d}/{d.day:02d}/{d.year}'
+    out: list[dict] = []
+    # SAM.gov ncode param doesn't accept comma-separated multi-NAICS reliably,
+    # so one call per NAICS. ~5 calls per facility.
+    for ncode in SAM_NAICS_SECURITY:
+        time.sleep(SAM_INTER_REQUEST_DELAY)
+        try:
+            r = client.get(f'{SAM_API}/opportunities/v2/search', params={
+                'api_key': api_key,
+                'limit': 25,
+                'postedFrom': fmt(start),
+                'postedTo': fmt(end),
+                'ncode': ncode,
+                'state': state,
+            }, timeout=HTTP_TIMEOUT)
+            if r.status_code == 200:
+                opps = r.json().get('opportunitiesData', []) or []
+                for o in opps:
+                    o['_naics_queried'] = ncode
+                out.extend(opps)
+            # 401/403/429 → just stop (rate limit / key issue)
+            elif r.status_code in (401, 403, 429):
+                print(f'    SAM.gov {r.status_code} — stopping further queries this run')
+                break
+        except httpx.HTTPError as e:
+            print(f'    SAM.gov query failed for ncode={ncode}: {e}')
+    # Dedupe by uiLink (same opp can hit multiple NAICS filters)
+    seen = set(); deduped = []
+    for o in out:
+        link = o.get('uiLink') or o.get('noticeId') or o.get('solicitationNumber') or ''
+        if link in seen: continue
+        seen.add(link); deduped.append(o)
+    return deduped
+
+
+def aggregate_sam(opps: list[dict]) -> dict:
+    """Pick the top opp (soonest deadline). Aggregate counts."""
+    if not opps:
+        return {
+            'active_opps_count': 0,
+            'earliest_deadline': None,
+            'top_opp_title': None, 'top_opp_url': None,
+            'top_opp_naics': None, 'top_opp_agency': None,
+            'queried_naics': list(SAM_NAICS_SECURITY),
+        }
+    def parse_deadline(o):
+        d = (o.get('responseDeadLine') or '').split('T')[0]
+        try: return date.fromisoformat(d)
+        except (ValueError, TypeError): return date(9999, 12, 31)
+    sorted_opps = sorted(opps, key=parse_deadline)
+    top = sorted_opps[0]
+    return {
+        'active_opps_count': len(opps),
+        'earliest_deadline': top.get('responseDeadLine', '').split('T')[0] or None,
+        'top_opp_title': (top.get('title') or '')[:140],
+        'top_opp_url': top.get('uiLink'),
+        'top_opp_naics': top.get('naicsCode'),
+        'top_opp_agency': top.get('department') or top.get('subTier'),
+        'queried_naics': list(SAM_NAICS_SECURITY),
+    }
 
 
 # ============================================================================
@@ -296,7 +386,8 @@ def aggregate(awards: list[dict]) -> dict:
 
 
 def enrich_one(client, ccn: str, facility_name: str, state: str,
-               *, force: bool = False, verbose: bool = True) -> dict:
+               *, force: bool = False, verbose: bool = True,
+               sam_key: Optional[str] = None) -> dict:
     cache_path = CACHE_DIR / f'{ccn}.json'
     if cache_path.exists() and not force:
         if verbose: print(f'  [{ccn}] using cached {cache_path.relative_to(ROOT)}')
@@ -332,6 +423,17 @@ def enrich_one(client, ccn: str, facility_name: str, state: str,
     else:
         if verbose: print(f'    no recipient match (will write nulls)')
 
+    # SAM.gov: active security/safety opportunities in this state (v2)
+    sam_opps: list[dict] = []
+    sam_aggs = aggregate_sam([])
+    if sam_key:
+        if verbose: print(f'    SAM.gov: querying active opps in {state} for security NAICS…')
+        sam_opps = search_sam_opportunities(client, state, api_key=sam_key)
+        sam_aggs = aggregate_sam(sam_opps)
+        if verbose:
+            print(f'    SAM.gov: {sam_aggs["active_opps_count"]} active opps, '
+                  f'earliest deadline {sam_aggs["earliest_deadline"]}')
+
     record = {
         'ccn': ccn,
         'facility_name': facility_name,
@@ -344,6 +446,8 @@ def enrich_one(client, ccn: str, facility_name: str, state: str,
         'awards': awards,
         'aggregates': aggs,
         'evidence_url': evidence_url,
+        'sam_opportunities': sam_opps,
+        'sam_aggregates': sam_aggs,
         'scraped_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
     }
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -363,6 +467,10 @@ USA_COLS = [
     'usa_total_award_5yr', 'usa_largest_award_5yr',
     'usa_top_naics', 'usa_top_naics_desc', 'usa_top_cfda',
     'usa_top_funding_agency', 'usa_evidence_url',
+    # SAM.gov (v2) — active security/safety opportunities at facility's state
+    'usa_sam_active_opps_count', 'usa_sam_earliest_deadline',
+    'usa_sam_top_opp_title', 'usa_sam_top_opp_url',
+    'usa_sam_top_opp_naics', 'usa_sam_top_opp_agency',
 ]
 
 
@@ -411,6 +519,13 @@ def merge_into_mart() -> int:
         r['usa_top_cfda'] = aggs.get('top_cfda') or ''
         r['usa_top_funding_agency'] = aggs.get('top_funding_agency') or ''
         r['usa_evidence_url'] = d.get('evidence_url') or ''
+        sam = d.get('sam_aggregates') or {}
+        r['usa_sam_active_opps_count'] = sam.get('active_opps_count') or ''
+        r['usa_sam_earliest_deadline'] = sam.get('earliest_deadline') or ''
+        r['usa_sam_top_opp_title'] = sam.get('top_opp_title') or ''
+        r['usa_sam_top_opp_url'] = sam.get('top_opp_url') or ''
+        r['usa_sam_top_opp_naics'] = sam.get('top_opp_naics') or ''
+        r['usa_sam_top_opp_agency'] = sam.get('top_opp_agency') or ''
     with SCORED_MART.open('w', newline='') as fh:
         w = csv.DictWriter(fh, fieldnames=fields)
         w.writeheader()
@@ -433,6 +548,11 @@ def _load_facility(ccn: str) -> Optional[dict]:
     return None
 
 
+def _load_sam_key() -> Optional[str]:
+    """Read SAMGOV_API_KEY from env (the .env-loaded shell exports it)."""
+    return os.environ.get('SAMGOV_API_KEY') or None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     g = ap.add_mutually_exclusive_group(required=True)
@@ -441,10 +561,18 @@ def main() -> int:
     g.add_argument('--all', action='store_true', help='Enrich every forge_tier A facility (will ask confirm)')
     g.add_argument('--merge', action='store_true', help='Merge cached records into tam_scored.csv')
     ap.add_argument('--force', action='store_true', help='Ignore cache and re-fetch')
+    ap.add_argument('--no-sam', action='store_true',
+                    help='Skip SAM.gov even if SAMGOV_API_KEY is set')
     args = ap.parse_args()
 
     if args.merge:
         return merge_into_mart()
+
+    sam_key = None if args.no_sam else _load_sam_key()
+    if sam_key:
+        print(f'  SAM.gov key detected — active opportunities mode ON')
+    else:
+        print(f'  SAM.gov key absent — USAspending-only mode')
 
     with httpx.Client(headers={'User-Agent': 'firefly-gtm/tier-b-contracts'}) as client:
         if args.ccn:
@@ -452,7 +580,7 @@ def main() -> int:
             if not row:
                 print(f'  ! CCN {args.ccn} not found in mart'); return 1
             enrich_one(client, args.ccn, row.get('facility_name', ''), row.get('state', ''),
-                       force=args.force)
+                       force=args.force, sam_key=sam_key)
             return 0
 
         if args.qsos:
@@ -462,7 +590,7 @@ def main() -> int:
                 state = row.get('state', '') if row else ''
                 # Prefer the formal mart name over the QSO_CCNS label
                 fn = (row.get('facility_name', '') if row else '') or name
-                enrich_one(client, ccn, fn, state, force=args.force)
+                enrich_one(client, ccn, fn, state, force=args.force, sam_key=sam_key)
             return 0
 
         if args.all:

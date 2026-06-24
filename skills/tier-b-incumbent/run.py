@@ -85,11 +85,11 @@ QUERY_TEMPLATES = (
 
 # 5 hand-picked QSOs (matches qso-linkedin + tier-b-contracts)
 QSO_CCNS = {
+    '330028': 'Richmond University Medical Center',
+    '330399': 'St Barnabas Hospital',
+    '140015': 'Blessing Hospital',
+    '490022': 'Mary Washington Hospital',
     '500064': 'Harborview Medical Center',
-    '310009': 'Clara Maass Medical Center',
-    '330101': 'NewYork-Presbyterian Hospital',
-    '450046': 'CHRISTUS Spohn Hospital — Corpus Christi',
-    '190064': 'Our Lady of the Lake Regional Medical Center',
 }
 
 

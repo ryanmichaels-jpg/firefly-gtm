@@ -1,72 +1,58 @@
-# Five QSOs — Firefly GTM Engine, Step 4 Deliverable
+# QSO Portfolio — v2 (incident-gate locked, std-first ranked)
 
-Generated **2026-06-22** from `data/mart/tam_scored.csv` (FORGE-A tier).
-Source data: free public records only (CMS HGI, AHRQ Compendium, CMS POS, NPPES, Census Geocoder, mandates.csv, plus 14 named source URLs documented per QSO).
-**Cost to produce: $0.**
+5 qualified sales opportunities selected after introducing the **HARD GATE on criterion #1** (verifiable on-site violent incident, not transported-to) and **decoupling footprint from independence** in criterion #3. Ranked by StandaloneScore desc.
 
-## The 5
-
-| # | Facility | State | Beds | System | Mandate | Play |
+| # | Hospital | State | std | Beds | Incident | Mandate (state-scope) |
 |---|---|---|---|---|---|---|
-| 1 | [Harborview Medical Center](qso-briefs/qso-1-harborview.md) | WA | 413 | UW Medicine | RCW 49.19 — **In force** | Feb 14, 2026 ED rampage ($100K damage) → enforcement clock |
-| 2 | [Clara Maass Medical Center](qso-briefs/qso-2-clara-maass.md) | NJ | 472 | RWJBarnabas Health | N.J.S.A. 26:2H-5.17 — **In force** | RWJB's 5-step framework + 1199SEIU contract pressure |
-| 3 | [NewYork-Presbyterian Hospital](qso-briefs/qso-3-nyp.md) | NY | 2,262 | NYP Healthcare | Ch.618/2025 — **Upcoming 2027-01-01** | TVTP-grant playbook → 10+ campus scale-out before mandate |
-| 4 | [CHRISTUS Spohn — Corpus Christi Shoreline](qso-briefs/qso-4-christus-spohn.md) | TX | 1,040 | CHRISTUS Health | SB240 — **In force** | Nov 13, 2024 dementia hoax — 50 officers, false alarm cost |
-| 5 | [Our Lady of the Lake Regional Medical Center](qso-briefs/qso-5-our-lady-of-the-lake.md) | LA | 976 | FMOL Health System | Lynne Truxillo Act — **In force** | Two homicides (Truxillo 2019, Jackson 2025) + named-incumbent lawsuit |
+| [1](qso-briefs/qso-1-richmond-university.md) | Richmond University Medical Center | NY | **100** | 473 | 2024-03-05 rampage stabbing 6 workers · OSHA SIR 2024-12-11 | NY S5294-B · eff 9/18/2026 |
+| [2](qso-briefs/qso-2-st-barnabas.md) | St Barnabas Hospital (SBH Health) | NY | **100** | 446 | OSHA SIR 2025-09-16 psych nurse fractured spine | NY S5294-B · eff 9/18/2026 |
+| [3](qso-briefs/qso-3-blessing.md) | Blessing Hospital | IL | **82** | 312 | OSHA SIR 2024-09-28 patient charged at staff, head injury | IL 210 ILCS 160 + HB3435 (PA 104-0306) signed 8/15/2025 |
+| [4](qso-briefs/qso-4-mary-washington.md) | Mary Washington Hospital | VA | **71.5** | 451 | 2025-03-11 deputy unprovoked attack (Stafford SO release) | VA HB2269/SB1260 · eff 7/1/2025 |
+| [5](qso-briefs/qso-5-harborview.md) | Harborview Medical Center | WA | **64** | 413 | 2026-02-19 ED arson + nurse assault ($100K damage) | WA RCW 49.19 · eff 1/1/2026 |
 
-## Methodology, briefly
+## Profile
 
-**Selection criteria** (applied to 622 FORGE-A facilities to narrow to 5):
+- **4 of 5 true-independent** (std ≥ 70). Harborview at std=64 is the original brief preserved.
+- **Zero mega-IDNs** — Mount Sinai, NYP, OLOL were benched as off-thesis (`bench/`).
+- **5 distinct states** (NY · NY · IL · VA · WA) — 2 NY anchors enable shared NYC field motion (Bronx + Staten Island).
+- **All 5 pass the incident HARD GATE** — 3 via OSHA SIR (employer self-report = on-site by definition); 2 via verified news + law-enforcement release.
+- **All 5 mandates are state-scope, active or in 12-month runway**.
 
-1. **forge_total = 27** (max — Fit × Acute=3 × Event=3 × Gravity=3)
-2. **Exec-title EDM** (NPPES auth_official is C-suite)
-3. **State diversity** — no two from the same state
-4. **System diversity** — no two from the same parent system
-5. **Mandate-status diversity** — at least 1 Upcoming (beat-the-clock) + at least 3 In-force (enforcement-risk)
-6. **Geographic diversity** — West, East, South, Gulf
-7. **Story diversity** — incident-driven, peer-leader, mandate-eponym, false-alarm, structural-litigation
+## Selection logic (v2)
 
-**Signal density varies deliberately**:
-- QSO 5 (Our Lady of the Lake) has the highest narrative density — two named homicides, active lawsuit, named incumbent vendor
-- QSO 3 (NYP) is a *peer-leader* — they already lead on WPV; the play is scale-out before NY's 2027 deadline
-- QSO 2 (Clara Maass) has medium signal — labor disputes + system-published WPV framework, not a specific incident
-- This is the point: showing **how to write a one-off when the signal stack is dense vs sparse** is the actual GTM craft.
+Criterion | Implementation
+---|---
+**#1 incident (HARD GATE)** | News + OSHA SIR with AT-vs-transported classifier; cyber / drill / hoax / showed-up-at exclusions enforced. **OSHA SIR is the primary source going forward** — on-site by definition, no ambiguity.
+**#2 proximity** | State spread WA/NY/VA/IL — pair-NY anchors for shared field motion
+**#3 footprint** | Beds ≥ 150 floor only — does NOT fuse with #4 independence (earlier draft conflated; fixed)
+**#4 incumbent recompete** | Blank for all 5 — no incumbent vendor case-study evidence in our 10-vendor batch
+**#5 mandate** | State-scope active or upcoming; effective dates verified against legislative sources
 
-**Free sources only** (no Apollo, no Apify, no LinkedIn scraping):
-- News & incident: GDELT / Google News / regional news outlets (KIRO 7, The Advocate, WAFB, KRIS TV)
-- Existing WPV programs: AHA case studies, DHS TVTP grantee stories, hospital newsrooms
-- Incumbent vendors: lawsuit filings (publicly named), competitor case-study pages where parseable
-- Mandate text: published statutes via the project's `data/reference/mandates.csv`
-- Buyer titles: NPPES authorized_official (for EDM), LinkedIn profile titles (public, view-only, not scraped)
+## Benched (do NOT promote — kept for sunk-cost reference work)
 
-## What each brief contains
+`bench/` directory:
+- **NYP** (mid-IDN, std=46) — 8-facility system, fits the "no mega-IDN" rule we corrected against. Real incident + buying committee + paid Apify research. Reference only.
+- **OLOL** (mid-IDN, std=37.7) — 11-facility FMOL Catholic system. Patricia Jackson 2025 parking-lot homicide + named-incumbent lawsuit (Inner Parish Security Corp). Legally complicated outreach.
+- **Clara Maass** (NJ) — FAILED incident gate (no verified on-site event)
+- **CHRISTUS Spohn** (TX) — FAILED incident gate (Nov 2024 was a hoax; May 2022 was transported-to)
 
-Each `qso-briefs/qso-N-*.md` includes:
+## Buying committee data — LinkedIn / Apify status
 
-1. **Account at a glance** — CCN, beds, ED/BH, parent system, ownership, AHRQ flags
-2. **FORGE rationale** — Acute / Event / Gravity scoring with the specific signal behind each
-3. **The signal that makes this a QSO** — narrative section with dates, names, dollar amounts, evidence URLs
-4. **Buying committee** — EDM (NPPES seed) + likely champion + sponsor + influencers, with sources
-5. **One-off draft** — full email body, 80–125 words, ready to personalize
-6. **Why this opening** — rationale for the specific framing
-7. **Open follow-ups (Tier-C)** — what paid enrichment would add
+| QSO | LinkedIn URL | Apify scan | Security champion confirmed? |
+|---|---|---|---|
+| Richmond U | `linkedin.com/company/richmond-university-medical-center` (URL fixed mid-run) | ⚠ pending Apify top-up | not yet — CEO confirmed via web |
+| St Barnabas (SBH) | `linkedin.com/company/sbhbronx` (URL fixed mid-run) | ⚠ pending Apify top-up | not yet — CEO confirmed via web |
+| Blessing | `linkedin.com/company/blessing-health` | ✓ 100 employees scraped | ✓ **David Schlosser** (Security Officer) + **Andrew S.** (CISO) + **Justin McDermott** (Risk Mgr) |
+| Mary Washington | `linkedin.com/company/mary-washington-healthcare` | ✓ 100 employees scraped | ✓ **Calvin Bostic, CPP, CHPA** (Director of Security, Safety & Emergency Management) — credentialed hospital security pro |
+| Harborview | `linkedin.com/company/harborview-medical-center` | ✓ cached 100 employees reclassified | ⚠ no formal champion title surfaced; UW Medicine structure puts security under separate org |
 
-## Non-negotiable constraint (per CLAUDE.md)
+**Apify budget exhausted ($0.04 remaining)** after Mary Washington + Blessing + reclassify ran. Richmond + St Barnabas LinkedIn URLs were wrong on first attempt (corrected; cached run failed before budget top-up). To resume:
+```bash
+python3 skills/qso-linkedin/run.py --ccn 330028   # Richmond
+python3 skills/qso-linkedin/run.py --ccn 330399   # St Barnabas
+```
 
-> **NEVER build email sequences. One-offs only.** Five emails written; each goes to one human about one event at one hospital. No drip cadence, no automation, no `{{first_name}}`.
+## See also
 
-## Important constraint on QSO 5
-
-**Our Lady of the Lake has active wrongful-death litigation involving its security contractor (Inner Parish Security Corp).** Before sending the QSO-5 email externally, route through Firefly's CRO and Legal — vendor outreach that references the Jackson case may be inappropriate or may need outside-counsel pre-clearance. The brief is internal-use until that approval lands. See QSO-5 brief for full constraint section.
-
-## What this is *not*
-
-- Not a sequence. Not a template. Not synthetic.
-- Not paid-enriched — Apollo / Apify / LinkedIn Sales Nav budgets reserved for QSO **scale-out** after these 5 have validated the model.
-- Not a slide deck. The portfolio piece is exactly what's in this directory: data → score → 5 named hospitals → 5 named one-offs.
-
----
-
-*Pipeline source map: [diagrams/source-map.svg](../diagrams/source-map.svg)*
-*Underlying data: [data/mart/tam_scored_sample.csv](../data/mart/tam_scored_sample.csv) (PII redacted)*
-*Mandate reference: [data/reference/mandates.csv](../data/reference/mandates.csv)*
+- Previous portfolio index: [qso_briefs_v1.md](qso_briefs_v1.md)
+- Old briefs (bench): [qso-briefs/bench/](qso-briefs/bench/)

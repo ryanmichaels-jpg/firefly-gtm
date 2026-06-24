@@ -79,11 +79,11 @@ APIFY_POLL_SECONDS = 5
 APIFY_MAX_WAIT_SECONDS = 360
 
 QSO_CCNS = {
+    '330028': 'Richmond University Medical Center',
+    '330399': 'St Barnabas Hospital',
+    '140015': 'Blessing Hospital',
+    '490022': 'Mary Washington Hospital',
     '500064': 'Harborview Medical Center',
-    '310009': 'Clara Maass Medical Center',
-    '330101': 'NewYork-Presbyterian Hospital',
-    '450046': 'CHRISTUS Spohn Hospital — Corpus Christi',
-    '190064': 'Our Lady of the Lake Regional Medical Center',
 }
 
 # Three targeted queries per facility — different angles on on-site violence.

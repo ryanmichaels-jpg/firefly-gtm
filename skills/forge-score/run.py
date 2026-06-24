@@ -399,11 +399,11 @@ def phase_score() -> Path:
 # per-account briefs live in documents/qso-briefs/. These CCNs are flagged
 # in the sample mart so reviewers can find them quickly.
 QSO_CCNS = {
-    '500064',  # Harborview Medical Center (WA)
-    '310009',  # Clara Maass Medical Center (NJ)
-    '330101',  # NewYork-Presbyterian Hospital (NY)
-    '450046',  # CHRISTUS Spohn Hospital Corpus Christi (TX)
-    '190064',  # Our Lady of the Lake Regional Medical Center (LA)
+    '330028',  # Richmond University Medical Center (NY)   std=100, OSHA SIR 2024-12-11
+    '330399',  # St Barnabas Hospital (NY)                 std=100, OSHA SIR 2025-09-16 psych nurse assault
+    '140015',  # Blessing Hospital (IL)                    std=82,  OSHA SIR 2024-09-28 patient knockdown
+    '490022',  # Mary Washington Hospital (VA)             std=71.5, news 2025-03-11 deputy attacked
+    '500064',  # Harborview Medical Center (WA)            std=64,  news 2026-02-19 patient arson/assault
 }
 
 def _build_sample(rows: list[dict]) -> list[dict]:

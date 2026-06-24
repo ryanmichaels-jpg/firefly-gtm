@@ -25,16 +25,16 @@ OUT_DIR = ROOT / 'documents' / 'qso-briefs' / 'auto'
 
 # 5 hand-picked QSOs (immutable — per CLAUDE.md Tier-C gate)
 QSO_CCNS = {
+    '330028': {'name': 'Richmond University Medical Center', 'state': 'NY',
+               'linkedin': 'https://www.linkedin.com/company/richmond-university-medical-center/'},
+    '330399': {'name': 'St Barnabas Hospital', 'state': 'NY',
+               'linkedin': 'https://www.linkedin.com/company/sbhbronx/'},
+    '140015': {'name': 'Blessing Hospital', 'state': 'IL',
+               'linkedin': 'https://www.linkedin.com/company/blessing-health/'},
+    '490022': {'name': 'Mary Washington Hospital', 'state': 'VA',
+               'linkedin': 'https://www.linkedin.com/company/mary-washington-healthcare/'},
     '500064': {'name': 'Harborview Medical Center', 'state': 'WA',
                'linkedin': 'https://www.linkedin.com/company/harborview-medical-center/'},
-    '310009': {'name': 'Clara Maass Medical Center', 'state': 'NJ',
-               'linkedin': 'https://www.linkedin.com/company/clara-maass-medical-center/'},
-    '330101': {'name': 'NewYork-Presbyterian Hospital', 'state': 'NY',
-               'linkedin': 'https://www.linkedin.com/company/new-york-presbyterian-hospital/'},
-    '450046': {'name': 'CHRISTUS Spohn Hospital — Corpus Christi', 'state': 'TX',
-               'linkedin': 'https://www.linkedin.com/company/christus-spohn-health-system/'},
-    '190064': {'name': 'Our Lady of the Lake Regional Medical Center', 'state': 'LA',
-               'linkedin': 'https://www.linkedin.com/company/olol/'},
 }
 
 APIFY_BASE = 'https://api.apify.com/v2'
