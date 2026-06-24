@@ -1060,19 +1060,28 @@ function renderDrawer() {
       </div>
       ${r.incumbent_detection_attempted ? `
         <div class="section">
-          <div class="section-head">INCUMBENT VENDOR (Indeed scan · ${r.incumbent_jobs_scanned || 0} jobs)</div>
+          <div class="section-head">INCUMBENT VENDOR${r.incumbent_max_confidence ? ' · ' + (r.incumbent_max_confidence).toUpperCase() + ' CONFIDENCE' : ''}</div>
           ${r.incumbent_primary_vendor ? `
             <div style="margin-bottom:8px">
               <span style="display:inline-block;padding:4px 10px;border-radius:9px;font-size:11px;font-weight:600;background:${r.incumbent_has_firefly_competitor?'#3a1e1d':'#1d3a26'};color:${r.incumbent_has_firefly_competitor?'#ff8a7e':'#5fd08a'}">
                 ${escapeHtml(r.incumbent_primary_vendor)} · ${escapeHtml(r.incumbent_primary_category || '')}${r.incumbent_has_firefly_competitor?' · DIRECT COMPETITOR':''}
               </span>
+              ${r.incumbent_evidence_source ? `<span style="display:inline-block;margin-left:6px;padding:3px 8px;border-radius:9px;font-size:10.5px;background:#19160e;color:#8a8273">source: ${escapeHtml(r.incumbent_evidence_source)}</span>` : ''}
             </div>
             ${r.incumbent_all_vendors && r.incumbent_all_vendors !== r.incumbent_primary_vendor ? `
               <div class="stat-row"><span>All vendors found</span><span style="font-size:11px">${escapeHtml(r.incumbent_all_vendors)}</span></div>
             ` : ''}
             <div class="stat-row"><span>Categories</span><span>${escapeHtml(r.incumbent_categories || '—')}</span></div>
+            ${r.incumbent_case_study_count ? `<div class="stat-row"><span>Case-study pages</span><span>${r.incumbent_case_study_count}</span></div>` : ''}
             <div class="stat-row"><span>Inferred vintage</span><span>${escapeHtml(r.incumbent_inferred_vintage_year || '—')}</span></div>
-            ${r.incumbent_evidence_url ? `<div style="margin-top:6px"><a href="${r.incumbent_evidence_url}" target="_blank" style="color:#5bb8d4;font-size:11px">Evidence job posting →</a></div>` : ''}
+            ${r.incumbent_evidence_url ? `<div style="margin-top:6px"><a href="${r.incumbent_evidence_url}" target="_blank" style="color:#5bb8d4;font-size:11px">Evidence →</a></div>` : ''}
+          ` : r.incumbent_candidate_vendors ? `
+            <div style="background:#2a261d;border:1px solid #3a3326;border-radius:9px;padding:11px 13px">
+              <div style="font-weight:600;color:#e0883a;font-size:12px">CANDIDATE VENDORS — verify before acting</div>
+              <div style="font-size:11px;color:#cfc8b8;margin-top:4px">
+                Medium-confidence case-study matches (state context not co-located with name): <strong>${escapeHtml(r.incumbent_candidate_vendors)}</strong>. Per the confidence invariant, these do NOT auto-populate the primary vendor. Open the per-CCN cache (data/raw/incumbent/by-ccn/${r.ccn}.json) to review evidence URLs + snippets.
+              </div>
+            </div>
           ` : r.incumbent_legacy_signal ? `
             <div style="background:#19160e;border:1px solid #2a261d;border-radius:9px;padding:11px 13px">
               <div style="font-weight:600;color:#cfc8b8;font-size:12px">No incumbent detected yet</div>

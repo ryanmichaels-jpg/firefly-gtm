@@ -59,10 +59,16 @@ CACHE_DIR = ROOT / 'data' / 'raw' / 'incumbent' / 'by-ccn'
 
 APIFY_BASE = 'https://api.apify.com/v2'
 INDEED_ACTOR = 'misceres~indeed-scraper'
+RAG_ACTOR = 'apify~rag-web-browser'      # v2: Google search + page fetch (free compute)
 HTTP_TIMEOUT = 60
 JOBS_PER_SEARCH = 15
+RAG_MAX_RESULTS = 8                        # top N Google results per query
 APIFY_POLL_SECONDS = 5
-APIFY_MAX_WAIT_SECONDS = 240
+APIFY_MAX_WAIT_SECONDS = 360
+RAG_INTER_QUERY_DELAY = 2.0
+MIN_HOSPITAL_NAME_LEN = 18                 # avoid false positives like "Memorial Hospital"
+CASE_STUDIES_DIR = ROOT / 'data' / 'raw' / 'incumbent' / 'case-studies'
+CASE_STUDY_QUERY_TMPL = '"{vendor}" hospital ("case study" OR "deploys" OR "installs" OR "implements" OR "partnership")'
 
 # Targeted queries per facility, each spanning a distinct slice of the
 # vendor dictionary. Per Ryan's category mapping:
@@ -204,6 +210,316 @@ def run_indeed(client, position: str, max_items: int = JOBS_PER_SEARCH) -> list[
 
 
 # ============================================================================
+# RAG Web Browser — vendor case-study path (v2)
+# ============================================================================
+
+def run_rag(client, query: str, max_results: int = RAG_MAX_RESULTS) -> list[dict]:
+    """One Google search + page-scrape via apify/rag-web-browser. Returns
+    list of {searchResult, metadata, markdown, text}."""
+    token = os.environ.get('APIFY_API_TOKEN')
+    if not token:
+        raise RuntimeError('APIFY_API_TOKEN missing')
+    payload = {
+        'query': query,
+        'maxResults': max_results,
+        'outputFormats': ['markdown'],
+    }
+    r = client.post(f'{APIFY_BASE}/acts/{RAG_ACTOR}/runs',
+                    params={'token': token}, json=payload, timeout=HTTP_TIMEOUT)
+    r.raise_for_status()
+    run = r.json()['data']; run_id = run['id']; waited = 0
+    while waited < APIFY_MAX_WAIT_SECONDS:
+        time.sleep(APIFY_POLL_SECONDS); waited += APIFY_POLL_SECONDS
+        run = client.get(f'{APIFY_BASE}/actor-runs/{run_id}',
+                         params={'token': token}, timeout=HTTP_TIMEOUT).json()['data']
+        if run['status'] in ('SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED-OUT'):
+            break
+    if run['status'] != 'SUCCEEDED':
+        raise RuntimeError(f'rag-web-browser {run_id} status={run["status"]}')
+    return client.get(f'{APIFY_BASE}/datasets/{run["defaultDatasetId"]}/items',
+                     params={'token': token, 'format': 'json', 'clean': '1'},
+                     timeout=HTTP_TIMEOUT).json()
+
+
+def _normalize(s: str) -> str:
+    s = (s or '').lower()
+    s = re.sub(r'[–—\-]+', ' ', s)
+    s = re.sub(r'[^a-z0-9 ]+', ' ', s)
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
+
+# Generic hospital-name suffixes that aren't distinctive on their own.
+# After stripping ALL of these (longest-first), the remainder must still
+# carry at least MIN_DISTINCTIVE_LEN chars of unique content, else the
+# name is rejected from the index. Replaces the cruder len(norm) >= 18
+# heuristic that let "Regional Medical Center" through.
+GENERIC_SUFFIXES = (
+    'regional medical center', 'community medical center', 'memorial medical center',
+    'university medical center', 'general medical center',
+    'medical center',
+    'regional hospital', 'community hospital', 'memorial hospital',
+    'general hospital', 'university hospital', "childrens hospital",
+    "children s hospital",
+    'health center', 'health system', 'health network',
+    'medical group', 'health services', 'healthcare',
+    'hospital', 'center', 'campus', 'clinic', 'inc',
+)
+MIN_DISTINCTIVE_LEN = 3   # require ≥3 chars of distinctive content after stripping
+                          # (e.g. "JPS Health Network" → "jps" is distinctive)
+
+
+def _strip_generics(norm_name: str) -> str:
+    """Return the distinctive remainder of a normalized hospital name after
+    stripping generic-suffix phrases."""
+    s = norm_name
+    changed = True
+    while changed:
+        changed = False
+        for suf in sorted(GENERIC_SUFFIXES, key=len, reverse=True):
+            if s.endswith(' ' + suf):
+                s = s[:-(len(suf) + 1)].strip(); changed = True
+            elif s == suf:
+                s = ''; changed = True
+            elif s.startswith(suf + ' '):
+                s = s[len(suf) + 1:].strip(); changed = True
+    return s.strip()
+
+
+def load_hospital_index() -> list[tuple[str, str, str, str]]:
+    """Return list of (normalized_name, ccn, raw_name, state) for facilities
+    that carry enough DISTINCTIVE content (post-generic-strip) to safely
+    substring-match in case-study text. Generic names like "Regional
+    Medical Center" alone are rejected (they collide across many CCNs)."""
+    if not SCORED_MART.exists():
+        return []
+    out: list[tuple[str, str, str, str]] = []
+    seen_norm = set()
+    with SCORED_MART.open(newline='') as fh:
+        for r in csv.DictReader(fh):
+            nm = (r.get('facility_name') or '').strip()
+            norm = _normalize(nm)
+            if len(norm) < MIN_HOSPITAL_NAME_LEN:
+                continue
+            distinctive = _strip_generics(norm)
+            if len(distinctive) < MIN_DISTINCTIVE_LEN:
+                # name is just generic stop-phrases — would false-positive everywhere
+                continue
+            if norm in seen_norm:
+                continue
+            seen_norm.add(norm)
+            out.append((norm, r['ccn'], nm, r.get('state', '')))
+    return out
+
+
+# Full US state names for context-validation in case-study text scans
+STATE_NAMES = {
+    'AL':'alabama','AK':'alaska','AZ':'arizona','AR':'arkansas','CA':'california',
+    'CO':'colorado','CT':'connecticut','DE':'delaware','FL':'florida','GA':'georgia',
+    'HI':'hawaii','ID':'idaho','IL':'illinois','IN':'indiana','IA':'iowa',
+    'KS':'kansas','KY':'kentucky','LA':'louisiana','ME':'maine','MD':'maryland',
+    'MA':'massachusetts','MI':'michigan','MN':'minnesota','MS':'mississippi','MO':'missouri',
+    'MT':'montana','NE':'nebraska','NV':'nevada','NH':'new hampshire','NJ':'new jersey',
+    'NM':'new mexico','NY':'new york','NC':'north carolina','ND':'north dakota','OH':'ohio',
+    'OK':'oklahoma','OR':'oregon','PA':'pennsylvania','RI':'rhode island','SC':'south carolina',
+    'SD':'south dakota','TN':'tennessee','TX':'texas','UT':'utah','VT':'vermont',
+    'VA':'virginia','WA':'washington','WV':'west virginia','WI':'wisconsin','WY':'wyoming',
+    'DC':'district of columbia',
+}
+
+
+def scan_for_hospitals(page_text: str, hospital_index: list[tuple[str, str, str, str]],
+                       *, state_proximity_chars: int = 400) -> list[dict]:
+    """Substring scan: for each candidate hospital, capture matches with a
+    confidence flag. confidence='high' if the hospital's state code or full
+    state name appears within ±state_proximity_chars of the name; 'medium'
+    otherwise. Don't drop low-confidence — Stryker/Vocera case-study INDEX
+    pages list hospital names without state metadata, and those are real."""
+    if not page_text:
+        return []
+    norm_text = _normalize(page_text)
+    if not norm_text:
+        return []
+    matches: list[dict] = []
+    for norm_name, ccn, raw_name, state in hospital_index:
+        idx = norm_text.find(norm_name)
+        if idx == -1:
+            continue
+        # state-context confidence
+        confidence = 'medium'
+        if state:
+            state_full = STATE_NAMES.get(state, '').lower()
+            win_lo = max(0, idx - state_proximity_chars)
+            win_hi = min(len(norm_text), idx + len(norm_name) + state_proximity_chars)
+            window = norm_text[win_lo:win_hi]
+            has_state = bool(
+                re.search(rf'\b{re.escape(state.lower())}\b', window)
+                or (state_full and state_full in window)
+            )
+            if has_state:
+                confidence = 'high'
+        snip_start = max(0, idx - 60); snip_end = min(len(norm_text), idx + len(norm_name) + 60)
+        matches.append({
+            'ccn': ccn, 'facility_name': raw_name, 'state': state,
+            'snippet': norm_text[snip_start:snip_end],
+            'confidence': confidence,
+        })
+    return matches
+
+
+def _slug(s: str) -> str:
+    return re.sub(r'[^a-z0-9]+', '-', (s or '').lower()).strip('-')
+
+
+def phase_case_studies(client, vendor_filter: Optional[list[str]] = None,
+                       force: bool = False, verbose: bool = True) -> dict:
+    """v2 path A. For each vendor, Google + scrape case-study pages and
+    reverse-index hospital mentions. Returns aggregate stats."""
+    CASE_STUDIES_DIR.mkdir(parents=True, exist_ok=True)
+    hospital_index = load_hospital_index()
+    if verbose:
+        print(f'  hospital index: {len(hospital_index)} unique normalized names ≥{MIN_HOSPITAL_NAME_LEN} chars')
+
+    # Vendor list (priority order: Firefly competitors first)
+    seen_vendors: set[str] = set()
+    ordered: list[tuple[str, str, bool]] = []
+    for _pat, name, cat, is_comp in VENDOR_DICTIONARY:
+        if name in seen_vendors: continue
+        seen_vendors.add(name); ordered.append((name, cat, is_comp))
+    ordered.sort(key=lambda x: (0 if x[2] else 1, x[1], x[0]))
+    if vendor_filter:
+        wanted = {v.lower() for v in vendor_filter}
+        ordered = [o for o in ordered if o[0].lower() in wanted]
+
+    findings_by_ccn: dict[str, list[dict]] = {}
+    queries_run = 0; results_total = 0
+    for vendor, cat, is_comp in ordered:
+        slug = _slug(vendor)
+        cache_path = CASE_STUDIES_DIR / f'{slug}.json'
+        if cache_path.exists() and not force:
+            data = json.loads(cache_path.read_text())
+            if verbose: print(f'  [{vendor:<26}] cached ({len(data.get("results", []))} pages)')
+        else:
+            q = CASE_STUDY_QUERY_TMPL.format(vendor=vendor)
+            if verbose: print(f'  [{vendor:<26}] rag-web-browser: {q!r}')
+            try:
+                items = run_rag(client, q)
+            except Exception as e:
+                if verbose: print(f'    ! query failed: {e}')
+                items = []
+            queries_run += 1
+            data = {
+                'vendor': vendor, 'category': cat, 'is_firefly_competitor': is_comp,
+                'query': q, 'results': items,
+                'scraped_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+            }
+            cache_path.write_text(json.dumps(data, indent=2))
+            time.sleep(RAG_INTER_QUERY_DELAY)
+        # Scan each page
+        results_total += len(data.get('results', []))
+        page_matches = 0
+        for it in data.get('results', []):
+            url = (it.get('searchResult') or {}).get('url') or it.get('url', '')
+            title = (it.get('metadata') or {}).get('title') or (it.get('searchResult') or {}).get('title') or ''
+            md = it.get('markdown') or it.get('text') or ''
+            matches = scan_for_hospitals(md, hospital_index)
+            for m in matches:
+                page_matches += 1
+                findings_by_ccn.setdefault(m['ccn'], []).append({
+                    'vendor': vendor, 'category': cat,
+                    'is_firefly_competitor': is_comp,
+                    'page_url': url, 'page_title': title,
+                    'facility_name': m['facility_name'], 'state': m['state'],
+                    'snippet': m['snippet'],
+                    'confidence': m.get('confidence', 'medium'),
+                })
+        if verbose and page_matches:
+            print(f'    → {page_matches} hospital mentions across {len(data.get("results", []))} pages')
+
+    return {
+        'vendors_queried': len(ordered),
+        'queries_run': queries_run,
+        'results_total': results_total,
+        'ccns_with_findings': len(findings_by_ccn),
+        'findings_by_ccn': findings_by_ccn,
+    }
+
+
+def merge_case_studies_into_per_ccn_cache(case_findings: dict[str, list[dict]],
+                                          verbose: bool = True) -> int:
+    """Update per-CCN incumbent cache files with case_study_findings."""
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    updated = 0
+    for ccn, findings in case_findings.items():
+        cache_path = CACHE_DIR / f'{ccn}.json'
+        record = json.loads(cache_path.read_text()) if cache_path.exists() else {
+            'ccn': ccn, 'facility_name': findings[0]['facility_name'],
+            'state': findings[0]['state'],
+            'queries': [], 'jobs_scanned': 0, 'vendors_found': [],
+            'job_evidence': [], 'all_vendor_names': '',
+            'categories_found': [], 'has_firefly_competitor': False,
+            'legacy_signal': False, 'detection_attempted': True,
+            'scraped_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+        }
+        # Merge in case-study findings — vendor-level dedup, keep all evidence URLs
+        existing_vendor_map = {v['vendor']: v for v in record.get('vendors_found', [])}
+        for f in findings:
+            v = existing_vendor_map.get(f['vendor'])
+            ev = {
+                'source': 'case_study',
+                'page_url': f['page_url'], 'page_title': f['page_title'],
+                'snippet': f['snippet'],
+                'confidence': f.get('confidence', 'medium'),
+            }
+            if not v:
+                existing_vendor_map[f['vendor']] = {
+                    'vendor': f['vendor'], 'category': f['category'],
+                    'is_firefly_competitor': f['is_firefly_competitor'],
+                    'snippet': f['snippet'],
+                    'case_study_evidence': [ev],
+                }
+            else:
+                v.setdefault('case_study_evidence', []).append(ev)
+        vendors = list(existing_vendor_map.values())
+        # Compute per-vendor max_confidence across all evidence (case-study + Indeed)
+        for v in vendors:
+            confs = set()
+            for ev in v.get('case_study_evidence', []):
+                if ev.get('confidence'): confs.add(ev['confidence'])
+            # Indeed evidence is treated as 'medium' (no state-context check exists for Indeed
+            # since the search itself is hospital-scoped — but still don't promote to 'high').
+            if v.get('job_url') and not confs:
+                confs.add('medium')
+            v['max_confidence'] = 'high' if 'high' in confs else ('medium' if confs else 'unknown')
+
+        # Recompute aggregates
+        record['vendors_found'] = vendors
+        record['all_vendor_names'] = '; '.join(sorted({v['vendor'] for v in vendors}))
+        record['categories_found'] = sorted({v['category'] for v in vendors})
+        record['has_firefly_competitor'] = any(v.get('is_firefly_competitor') for v in vendors)
+        record['legacy_signal'] = (record.get('jobs_scanned', 0) > 0
+                                    and not vendors)
+        # Primary: ONLY high-confidence vendors auto-populate incumbent_primary_vendor
+        # per the confidence invariant. Medium-only matches stay in vendors_found for
+        # human verification but never get auto-promoted.
+        high = [v for v in vendors if v.get('max_confidence') == 'high']
+        comps_high = [v for v in high if v.get('is_firefly_competitor')]
+        record['primary_incumbent'] = (
+            comps_high[0] if comps_high else (high[0] if high else None)
+        )
+        # Per-facility max confidence (highest of any vendor's max)
+        any_high = any(v.get('max_confidence') == 'high' for v in vendors)
+        any_med = any(v.get('max_confidence') == 'medium' for v in vendors)
+        record['max_confidence'] = 'high' if any_high else ('medium' if any_med else 'none')
+        record['has_case_study_evidence'] = True
+        cache_path.write_text(json.dumps(record, indent=2))
+        updated += 1
+        if verbose:
+            print(f'  [{ccn}] +{len(findings)} case-study findings · vendors now: {record["all_vendor_names"]}')
+    return updated
+
+
+# ============================================================================
 # Per-facility enrich
 # ============================================================================
 
@@ -312,13 +628,17 @@ def enrich_one(client, ccn: str, facility_name: str, state: str,
 INCUMBENT_COLS = [
     'incumbent_detection_attempted',
     'incumbent_jobs_scanned',
-    'incumbent_primary_vendor',
+    'incumbent_primary_vendor',         # ONLY populated when a HIGH-confidence match exists
     'incumbent_primary_category',
-    'incumbent_all_vendors',
+    'incumbent_all_vendors',            # full vendor list (high + medium) for verification UI
+    'incumbent_candidate_vendors',      # medium-confidence vendors awaiting verification
     'incumbent_categories',
     'incumbent_has_firefly_competitor',
+    'incumbent_max_confidence',         # high | medium | none — per facility
     'incumbent_legacy_signal',
     'incumbent_evidence_url',
+    'incumbent_evidence_source',        # indeed | case_study | both
+    'incumbent_case_study_count',       # # of case-study pages mentioning this hospital
     'incumbent_inferred_vintage_year',
 ]
 
@@ -349,14 +669,35 @@ def merge_into_mart() -> int:
         primary = d.get('primary_incumbent') or {}
         r['incumbent_detection_attempted'] = 'True'
         r['incumbent_jobs_scanned'] = d.get('jobs_scanned', 0)
+        # primary_vendor only populated when HIGH confidence — per invariant
         r['incumbent_primary_vendor'] = primary.get('vendor') or ''
         r['incumbent_primary_category'] = primary.get('category') or ''
         r['incumbent_all_vendors'] = d.get('all_vendor_names') or ''
+        # Surface medium-confidence vendors as "candidate" — UI rendering caller's responsibility
+        candidates = sorted({v['vendor'] for v in (d.get('vendors_found') or [])
+                             if v.get('max_confidence') == 'medium'})
+        r['incumbent_candidate_vendors'] = '; '.join(candidates)
         r['incumbent_categories'] = '; '.join(d.get('categories_found') or [])
         r['incumbent_has_firefly_competitor'] = 'True' if d.get('has_firefly_competitor') else 'False'
+        r['incumbent_max_confidence'] = d.get('max_confidence', '')
         r['incumbent_legacy_signal'] = 'True' if d.get('legacy_signal') else 'False'
-        r['incumbent_evidence_url'] = (primary.get('job_url') if primary else None) or ''
-        # Vintage from first-seen post date (Apify's heuristic)
+        # Evidence URL: prefer case-study (more authoritative) over Indeed
+        ev_url = ''
+        if primary.get('case_study_evidence'):
+            ev_url = primary['case_study_evidence'][0].get('page_url') or ''
+        if not ev_url:
+            ev_url = primary.get('job_url') or ''
+        r['incumbent_evidence_url'] = ev_url
+        # Source mix: track which detection paths fired
+        sources: list[str] = []
+        any_cs = any(v.get('case_study_evidence') for v in (d.get('vendors_found') or []))
+        any_idd = any(v.get('job_url') for v in (d.get('vendors_found') or []))
+        if any_idd: sources.append('indeed')
+        if any_cs: sources.append('case_study')
+        r['incumbent_evidence_source'] = '+'.join(sources)
+        cs_count = sum(len(v.get('case_study_evidence') or []) for v in (d.get('vendors_found') or []))
+        r['incumbent_case_study_count'] = cs_count or ''
+        # Vintage: first_seen from Indeed; case-study date parsing deferred
         first_seen = (primary or {}).get('first_seen') or d.get('earliest_job_post') or ''
         r['incumbent_inferred_vintage_year'] = first_seen[:4] if first_seen else ''
     with SCORED_MART.open('w', newline='') as fh:
@@ -379,10 +720,14 @@ def _load_facility(ccn: str) -> Optional[dict]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     g = ap.add_mutually_exclusive_group(required=True)
-    g.add_argument('--ccn', help='Enrich one facility')
-    g.add_argument('--qsos', action='store_true', help='Enrich the 5 hand-picked QSOs')
+    g.add_argument('--ccn', help='Enrich one facility (Indeed path)')
+    g.add_argument('--qsos', action='store_true', help='Enrich the 5 hand-picked QSOs (Indeed path)')
     g.add_argument('--all', action='store_true', help='Enrich every forge_tier A facility (asks confirm)')
+    g.add_argument('--case-studies', action='store_true',
+                   help='v2 path A: rag-web-browser case-study scan across vendors → reverse-index hospitals')
     g.add_argument('--merge', action='store_true', help='Merge cached records into tam_scored.csv')
+    ap.add_argument('--vendor', action='append',
+                    help='With --case-studies: restrict to one or more vendor names (repeatable)')
     ap.add_argument('--force', action='store_true', help='Ignore cache and re-scrape')
     args = ap.parse_args()
 
@@ -395,6 +740,19 @@ def main() -> int:
         return 1
 
     with httpx.Client(headers={'User-Agent': 'firefly-gtm/tier-b-incumbent'}) as client:
+        if args.case_studies:
+            print(f'tier-b-incumbent: v2 case-study path (rag-web-browser)')
+            stats = phase_case_studies(client, vendor_filter=args.vendor, force=args.force)
+            print()
+            print(f'  vendors queried   : {stats["vendors_queried"]}')
+            print(f'  rag runs spent    : {stats["queries_run"]} (cached: {stats["vendors_queried"]-stats["queries_run"]})')
+            print(f'  pages scraped     : {stats["results_total"]}')
+            print(f'  CCNs with hits    : {stats["ccns_with_findings"]}')
+            if stats['findings_by_ccn']:
+                merged = merge_case_studies_into_per_ccn_cache(stats['findings_by_ccn'])
+                print(f'  per-CCN records updated: {merged}')
+            return 0
+
         if args.ccn:
             row = _load_facility(args.ccn)
             if not row:
