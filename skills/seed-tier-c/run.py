@@ -567,14 +567,26 @@ def _mandate_status(row: dict) -> tuple[str | None, date | None]:
     return None, None
 
 def _state_codes(jurisdiction: str) -> tuple[list[str], str]:
-    """Return (state_codes, scope) where scope ∈ {'state','federal','other'}."""
+    """Return (state_codes, scope) where scope ∈ {'state','federal','other'}.
+    Map covers all 50 states + DC since the universe expansion to all states
+    (2026-06-23). Previously only the original 15 mandate states were mapped,
+    which silently dropped Ohio HB452, Virginia HB2269/SB1260, Oregon SB537,
+    etc. — they fell back to federal-scope H.R.2531/S.1232 wrongly."""
     j = (jurisdiction or '').upper()
     state_map = {
-        'WASHINGTON': 'WA', 'CALIFORNIA': 'CA', 'NEW YORK': 'NY',
-        'NEW JERSEY': 'NJ', 'LOUISIANA': 'LA', 'FLORIDA': 'FL',
-        'ILLINOIS': 'IL', 'TEXAS': 'TX', 'ARIZONA': 'AZ',
-        'MASSACHUSETTS': 'MA', 'NORTH CAROLINA': 'NC', 'OREGON': 'OR',
-        'COLORADO': 'CO', 'CONNECTICUT': 'CT', 'MARYLAND': 'MD',
+        'ALABAMA':'AL','ALASKA':'AK','ARIZONA':'AZ','ARKANSAS':'AR',
+        'CALIFORNIA':'CA','COLORADO':'CO','CONNECTICUT':'CT','DELAWARE':'DE',
+        'FLORIDA':'FL','GEORGIA':'GA','HAWAII':'HI','IDAHO':'ID',
+        'ILLINOIS':'IL','INDIANA':'IN','IOWA':'IA','KANSAS':'KS',
+        'KENTUCKY':'KY','LOUISIANA':'LA','MAINE':'ME','MARYLAND':'MD',
+        'MASSACHUSETTS':'MA','MICHIGAN':'MI','MINNESOTA':'MN','MISSISSIPPI':'MS',
+        'MISSOURI':'MO','MONTANA':'MT','NEBRASKA':'NE','NEVADA':'NV',
+        'NEW HAMPSHIRE':'NH','NEW JERSEY':'NJ','NEW MEXICO':'NM','NEW YORK':'NY',
+        'NORTH CAROLINA':'NC','NORTH DAKOTA':'ND','OHIO':'OH','OKLAHOMA':'OK',
+        'OREGON':'OR','PENNSYLVANIA':'PA','RHODE ISLAND':'RI','SOUTH CAROLINA':'SC',
+        'SOUTH DAKOTA':'SD','TENNESSEE':'TN','TEXAS':'TX','UTAH':'UT',
+        'VERMONT':'VT','VIRGINIA':'VA','WASHINGTON':'WA','WEST VIRGINIA':'WV',
+        'WISCONSIN':'WI','WYOMING':'WY','DISTRICT OF COLUMBIA':'DC',
     }
     if 'US — ' in j or j.startswith('US—') or 'FEDERAL' in j:
         return list(STATES), 'federal'
