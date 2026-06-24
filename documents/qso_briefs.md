@@ -40,17 +40,13 @@ Criterion | Implementation
 
 | QSO | LinkedIn URL | Apify scan | Security champion confirmed? |
 |---|---|---|---|
-| Richmond U | `linkedin.com/company/richmond-university-medical-center` (URL fixed mid-run) | ⚠ pending Apify top-up | not yet — CEO confirmed via web |
-| St Barnabas (SBH) | `linkedin.com/company/sbhbronx` (URL fixed mid-run) | ⚠ pending Apify top-up | not yet — CEO confirmed via web |
+| Richmond U | `linkedin.com/company/richmond-university-medical-center` | ✓ 100 employees scraped | ✓ **Michael Battiste** (GC + SVP Legal Affairs & Risk Mgmt) + **Szymon Kucharek** (Facilities Mgr) + **Inna Youssef** (Sr Nursing Quality, CPHQ) |
+| St Barnabas (SBH) | `linkedin.com/company/sbhbronx` | ✓ 100 employees scraped | ✓ **Edward Jarvis** (Vice Chair Emergency Med + Director of Quality) + **Frank Conti** (AVP Engineering & Facilities) + **Dr. Tara M H., DNP** (Exec Nursing Leadership) |
 | Blessing | `linkedin.com/company/blessing-health` | ✓ 100 employees scraped | ✓ **David Schlosser** (Security Officer) + **Andrew S.** (CISO) + **Justin McDermott** (Risk Mgr) |
 | Mary Washington | `linkedin.com/company/mary-washington-healthcare` | ✓ 100 employees scraped | ✓ **Calvin Bostic, CPP, CHPA** (Director of Security, Safety & Emergency Management) — credentialed hospital security pro |
 | Harborview | `linkedin.com/company/harborview-medical-center` | ✓ cached 100 employees reclassified | ⚠ no formal champion title surfaced; UW Medicine structure puts security under separate org |
 
-**Apify budget exhausted ($0.04 remaining)** after Mary Washington + Blessing + reclassify ran. Richmond + St Barnabas LinkedIn URLs were wrong on first attempt (corrected; cached run failed before budget top-up). To resume:
-```bash
-python3 skills/qso-linkedin/run.py --ccn 330028   # Richmond
-python3 skills/qso-linkedin/run.py --ccn 330399   # St Barnabas
-```
+**All 5 LinkedIn scrapes complete** (post-Apify top-up). Total: 5 hospitals × ~100 employees each = 500 LinkedIn profiles classified against the title-pattern dictionary. Champion / EDM / Influencer breakdowns surfaced for all 5; full per-profile JSON in `auto/linkedin-<ccn>.json` (gitignored — PII).
 
 ## See also
 

@@ -43,12 +43,14 @@ Note: 160-year-old Bronx safety-net serving "predominantly low-income, high-need
 | Role | Likely Name | Source | Notes |
 |---|---|---|---|
 | **CEO / EDM sponsor** | **Dr. David Perlstein, MD, MBA, FAAP** | [AHA Chair File](https://www.aha.org/news/leadership-rounds/2024-02-26-chair-file-leadership-dialogue-driving-community-health-improvement-david-perlstein-md-sbh) · [LinkedIn](https://www.linkedin.com/in/david-perlstein-4882a218/) | President/CEO since July 2016; pediatrician; champions community health |
-| Likely champion | **Director of Security**, SBH | ⚠ Apify LinkedIn scrape returned 0 (URL fixed to `linkedin.com/company/sbhbronx`, Apify budget exceeded — retry after top-up: `python3 skills/qso-linkedin/run.py --ccn 330399`) · Bronx safety-net likely has dedicated director given police-coordination demands |
+| **Champion (ED + Quality) — CONFIRMED** | **Edward Jarvis — Vice Chair, Dept of Emergency Medicine + Director of Quality, SBH Health System** | [LinkedIn](https://www.linkedin.com/in/edward-jarvis-930403110) | direct stakeholder in Sept 16 2025 psych monitoring incident; ED + Quality dual role makes him the WPV-program point person |
+| **Champion (Facilities / physical-security capex) — CONFIRMED** | **Frank Conti — AVP Engineering & Facilities** | [LinkedIn](https://www.linkedin.com/in/frankconti) | $140M state-funded ED expansion runs through this seat |
+| Champion (Nursing Quality) — CONFIRMED | **Dr. Tara M H., DNP — Executive Nursing Leadership, Quality Mgmt, Patient Safety** | [LinkedIn](https://www.linkedin.com/in/dr-tara-m-h-5478555) | Sept 2025 victim was a 1:1 psych observer (nursing staff) |
 | Likely sponsor | **Dr. Perlstein** + COO | direct line at a 446-bed standalone | |
-| Influencer | **CNO** | psych-staff assault → CNO direct stakeholder | |
-| Influencer | **VP Facilities / Capital Projects** | $140M state grant administrator | new capex creates safety-tech budget window |
-| Influencer | **Risk / Compliance lead** | OSHA SIR reporter of record | |
-| EDM proxy in mart | Quality Assurance Coordinator (NPPES auth_official seed) | NPPES public registry | functional, not the buyer |
+| Influencer (COO) — CONFIRMED | **Eric Appelbaum — COO + Senior EVP** | [LinkedIn](https://www.linkedin.com/in/eric-appelbaum-95bb6798) | day-to-day operations + capex sign-off |
+| Influencer (CMO) — CONFIRMED | **Daniel Lombardi, DO, MBA, FACOEP — SVP/CMO** | [LinkedIn](https://www.linkedin.com/in/daniel-lombardi-do-mba-facoep-55021b31) | medical-staff stakeholder; FACOEP = emergency medicine certified |
+| Influencer (IT/Info Sec) — CONFIRMED | **Renee Hulen, RN, MS — AVP IT / Clinical Informatics / InfoSecurity** | [LinkedIn](https://www.linkedin.com/in/renee-hulen-rn-ms-bha-iq-ci-499203a) | network/integration owner for any Lattice/Ember deployment |
+| Influencer (Govt Affairs) — CONFIRMED | **Ninfa Segarra — SVP Government & Community Affairs** | [LinkedIn](https://www.linkedin.com/in/ninfa-segarra-3b136075) | manages the Hochul $140M relationship; safety-tech aligns with state's investment thesis |
 
 ## Capital context — the budget signal
 

@@ -40,11 +40,15 @@ Together: a multi-victim rampage + a follow-on security-staff injury restraining
 | Role | Likely Name | Source | Notes |
 |---|---|---|---|
 | **CEO / EDM sponsor** | **Daniel J. Messina, PhD, MPA, FACHE** | [RUMC Board](https://rumcsi.org/board-members/daniel-j-messina/) | President/CEO since April 2014; Staten Island lifer; #7 on City and State NY 2024 Staten Island Power 100 |
-| Likely champion | **VP / Director of Security**, RUMC | ⚠ Apify LinkedIn scrape returned 0 (URL fixed to `linkedin.com/company/richmond-university-medical-center`, Apify budget exceeded — retry after top-up: `python3 skills/qso-linkedin/run.py --ccn 330028`) · confirm via IAHSS NY chapter directory | independent hospital — likely a single security director, not a system VP |
+| **Champion (Risk + WPV compliance) — CONFIRMED** | **Michael Battiste — General Counsel & SVP Legal Affairs & Risk Management** | [LinkedIn](https://www.linkedin.com/in/michael-battiste-7834267a) | owns S5294-B compliance program at the standalone — single-decision-maker |
+| **Champion (Facilities / physical-security capex) — CONFIRMED** | **Szymon Kucharek — Facilities Manager** | [LinkedIn](https://www.linkedin.com/in/szymon-kucharek-151428199) | physical-security capital line owner |
+| Champion (Quality / Patient Safety) — CONFIRMED | **Inna Youssef, MS, RN-C, FNP, CPHQ — Senior Nursing Quality Executive, Patient Safety** | [LinkedIn](https://www.linkedin.com/in/inna-myaskovskiy) | CPHQ = Certified Professional in Healthcare Quality — March 2024 rampage owner from nursing side |
 | Likely sponsor | **Daniel Messina** (CEO) directly | direct line for safety-critical decisions at a standalone | |
-| Influencer | **Chief Nursing Officer** | rumcsi.org/leadership | nurses were victims in the March 2024 rampage |
-| Influencer | **VP Risk / Compliance** | confirm | likely the OSHA SIR reporter of record |
-| EDM proxy in mart | VP Finance (NPPES auth_official seed) | NPPES public registry | functional, not the security buyer |
+| Influencer (Operations) — CONFIRMED | **Gregory Fernandez, MD/MBA — SVP Operations** | [LinkedIn](https://www.linkedin.com/in/gregory-fernandez-md-mba) | hospital floor operations |
+| Influencer (CMO) — CONFIRMED | **Philip Otterbeck — CMO** | [LinkedIn](https://www.linkedin.com/in/philip-otterbeck-7b4293393) | medical staff stakeholder for staff-safety |
+| Influencer (CFO) — CONFIRMED | **David Murray — CFO/EVP** | [LinkedIn](https://www.linkedin.com/in/david-murray-81b9b1a) | capital approval |
+| Influencer (Nursing) — CONFIRMED | **Anthony Basile, DNP, RN, CCRN, SCRN — VP (Critical Care + Stroke certifications)** | [LinkedIn](https://www.linkedin.com/in/anthony-basile-dnp-rn-ccrn-scrn-2937a8b8) | nursing leadership; March 2024 rampage victims were nursing staff |
+| Influencer (IT) — CONFIRMED | **Joseph Cuozzo — VP IT** | [LinkedIn](https://www.linkedin.com/in/joseph-cuozzo-694b14a5) | integration / network for Lattice gateway deployment |
 
 ## One-off draft
 
