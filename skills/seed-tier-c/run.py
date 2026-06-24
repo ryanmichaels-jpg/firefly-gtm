@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""seed-tier-c: build data/mart/tam.csv for the 15 priority mandate states.
+"""seed-tier-c: build data/mart/tam.csv for the 50 states + DC.
 
 One file, eight ordered idempotent steps. Each step reads the prior staging
 file and writes its own — so re-running a single step is safe and cheap.
@@ -30,8 +30,16 @@ STAGE = ROOT / 'data' / 'staging'
 MART = ROOT / 'data' / 'mart'
 REF = ROOT / 'data' / 'reference'
 
-STATES = {'WA', 'CA', 'NY', 'NJ', 'LA', 'FL', 'IL', 'TX', 'AZ',
-          'MA', 'NC', 'OR', 'CO', 'CT', 'MD'}
+# 50 states + DC. Expanded from the original 15 mandate-states on 2026-06-23
+# to give the engine the full U.S. care-delivery universe. Mandate-join (step 7)
+# correctly leaves non-mandate-state facilities at mandate_status=None +
+# needs_review=True; they sit at forge_total=0 / forge_tier=X but stay in the TAM.
+STATES = {
+    'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+    'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+    'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+    'VA','WA','WV','WI','WY','DC',
+}
 
 EXEC_TITLES = (
     'ceo', 'cfo', 'coo', 'cio', 'cto', 'cmo', 'cno', 'cso',
@@ -74,10 +82,10 @@ def assert_unique(rows, key, label):
         print(f'  ✓ {label}: {key} is unique across {len(rows)} rows')
 
 # ============================================================================
-# STEP 1 — filter CMS HGI to 15 priority states
+# STEP 1 — filter CMS HGI to 50 states + DC
 # ============================================================================
 def step_1_cms_hgi() -> Path:
-    banner(1, 'CMS Hospital General Information → 15 states')
+    banner(1, 'CMS Hospital General Information → 50 states + DC')
     src = RAW / 'cms-hgi' / 'Hospital_General_Information_2026-05-13.csv'
     out_rows = []
     for row in read_csv(src):
