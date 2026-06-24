@@ -286,15 +286,27 @@ def _strip_generics(norm_name: str) -> str:
     return s.strip()
 
 
-def load_hospital_index() -> list[tuple[str, str, str, str]]:
-    """Return list of (normalized_name, ccn, raw_name, state) for facilities
-    that carry enough DISTINCTIVE content (post-generic-strip) to safely
-    substring-match in case-study text. Generic names like "Regional
-    Medical Center" alone are rejected (they collide across many CCNs)."""
+# Vendor case studies often refer to hospitals by SHORT brand form
+# ("Vail Health") not full CMS name ("Vail Health Hospital"). Index both
+# the full normalized name AND the distinctive form, as long as the
+# distinctive form is unique across the TAM and long enough to avoid
+# false-positives. 7 chars is the empirically-tested floor: "vail health"
+# (11 chars) catches CENTEGIX's Vail Health Behavioral Health case study,
+# while "jps" (3 chars) stays full-name-only to avoid token collisions.
+SHORT_FORM_MIN_LEN = 7
+
+
+def load_hospital_index() -> list[tuple[str, str, str, str, bool]]:
+    """Return list of (search_key, ccn, raw_name, state, is_short_form).
+    Full normalized names are eligible for HIGH confidence; short-form
+    entries (distinctive prefix only) max out at MEDIUM because the
+    short form alone is too ambiguous — "Virginia Hospital" matches
+    "Virginia school", "Yavapai Regional" matches "Yavapai college",
+    state context can't reliably disambiguate without the suffix word."""
     if not SCORED_MART.exists():
         return []
-    out: list[tuple[str, str, str, str]] = []
-    seen_norm = set()
+    out: list[tuple[str, str, str, str, bool]] = []
+    seen: set[str] = set()
     with SCORED_MART.open(newline='') as fh:
         for r in csv.DictReader(fh):
             nm = (r.get('facility_name') or '').strip()
@@ -303,12 +315,14 @@ def load_hospital_index() -> list[tuple[str, str, str, str]]:
                 continue
             distinctive = _strip_generics(norm)
             if len(distinctive) < MIN_DISTINCTIVE_LEN:
-                # name is just generic stop-phrases — would false-positive everywhere
                 continue
-            if norm in seen_norm:
-                continue
-            seen_norm.add(norm)
-            out.append((norm, r['ccn'], nm, r.get('state', '')))
+            if norm not in seen:
+                seen.add(norm)
+                out.append((norm, r['ccn'], nm, r.get('state', ''), False))
+            if (len(distinctive) >= SHORT_FORM_MIN_LEN
+                    and distinctive != norm and distinctive not in seen):
+                seen.add(distinctive)
+                out.append((distinctive, r['ccn'], nm, r.get('state', ''), True))
     return out
 
 
@@ -328,47 +342,148 @@ STATE_NAMES = {
 }
 
 
-def scan_for_hospitals(page_text: str, hospital_index: list[tuple[str, str, str, str]],
-                       *, state_proximity_chars: int = 400) -> list[dict]:
-    """Substring scan: for each candidate hospital, capture matches with a
-    confidence flag. confidence='high' if the hospital's state code or full
-    state name appears within ±state_proximity_chars of the name; 'medium'
-    otherwise. Don't drop low-confidence — Stryker/Vocera case-study INDEX
-    pages list hospital names without state metadata, and those are real."""
+# Vendor-deployment verbs that must appear near a hospital-name match to
+# distinguish a real deployment claim from incidental name overlap (city
+# named "Columbus", state list, etc.). Required for short-form matches.
+VENDOR_VERBS = (
+    'case study', 'case studies', 'deploys', 'deployed', 'deploying', 'deployment',
+    'installs', 'installed', 'installing', 'installation',
+    'implements', 'implemented', 'implementing', 'implementation',
+    'selects', 'selected', 'selecting', 'selection',
+    'partnership', 'partnered', 'partner with', 'partners with',
+    'customer', 'client', 'announces', 'announced',
+)
+_VENDOR_VERB_RE = re.compile(
+    r'\b(' + '|'.join(re.escape(v) for v in VENDOR_VERBS) + r')\b', re.IGNORECASE)
+
+
+def scan_for_hospitals(page_text: str, hospital_index: list[tuple[str, str, str, str, bool]],
+                       *, state_proximity_chars: int = 400,
+                       verb_proximity_chars: int = 200) -> list[dict]:
+    """Substring scan + deployment-verb proximity filter. A hospital-name
+    substring match is recorded only if a vendor-deployment verb appears
+    within ±verb_proximity_chars (rejects alphabetical state-list and
+    city-name collisions that dominate raw substring matches).
+    Confidence:
+      high   = verb context AND state context (within ±state_proximity_chars)
+      medium = verb context only
+      (no-verb matches are dropped — too noisy for short-form indexing)"""
     if not page_text:
         return []
     norm_text = _normalize(page_text)
     if not norm_text:
         return []
     matches: list[dict] = []
-    for norm_name, ccn, raw_name, state in hospital_index:
+    for norm_name, ccn, raw_name, state, is_short_form in hospital_index:
         idx = norm_text.find(norm_name)
         if idx == -1:
             continue
-        # state-context confidence
+        # 1. Required: deployment-verb proximity
+        v_lo = max(0, idx - verb_proximity_chars)
+        v_hi = min(len(norm_text), idx + len(norm_name) + verb_proximity_chars)
+        if not _VENDOR_VERB_RE.search(norm_text[v_lo:v_hi]):
+            continue
+        # 2. Optional: state-context bumps to high (full-name matches only)
         confidence = 'medium'
-        if state:
+        if state and not is_short_form:
             state_full = STATE_NAMES.get(state, '').lower()
-            win_lo = max(0, idx - state_proximity_chars)
-            win_hi = min(len(norm_text), idx + len(norm_name) + state_proximity_chars)
-            window = norm_text[win_lo:win_hi]
+            s_lo = max(0, idx - state_proximity_chars)
+            s_hi = min(len(norm_text), idx + len(norm_name) + state_proximity_chars)
+            window = norm_text[s_lo:s_hi]
             has_state = bool(
                 re.search(rf'\b{re.escape(state.lower())}\b', window)
                 or (state_full and state_full in window)
             )
             if has_state:
                 confidence = 'high'
-        snip_start = max(0, idx - 60); snip_end = min(len(norm_text), idx + len(norm_name) + 60)
+        snip_start = max(0, idx - 80); snip_end = min(len(norm_text), idx + len(norm_name) + 80)
         matches.append({
             'ccn': ccn, 'facility_name': raw_name, 'state': state,
             'snippet': norm_text[snip_start:snip_end],
             'confidence': confidence,
+            'match_form': 'short' if is_short_form else 'full',
         })
     return matches
 
 
 def _slug(s: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', (s or '').lower()).strip('-')
+
+
+# ============================================================================
+# Publication date extraction (Extension A — vintage signal)
+# ============================================================================
+
+# Inferred contract term: assumed if a case study doesn't explicitly state a term.
+# 5 years matches typical commercial security/safety vendor contract lengths.
+DEFAULT_CONTRACT_TERM_YEARS = 5
+
+# Firefly's own product categories — vendors here directly displace Firefly.
+DIRECT_CATEGORIES = {'gunshot_detection', 'mass_notification', 'duress'}
+# Adjacent categories — Firefly integrates with these but doesn't displace them.
+# Listed competitors here (e.g. Vocera) shouldn't rank as urgent displacement
+# targets even when their case studies confirm a hospital deployment.
+ADJACENT_CATEGORIES = {'comms', 'vms', 'access_control'}
+
+
+def _directness(category: str) -> str:
+    if category in DIRECT_CATEGORIES: return 'direct'
+    if category in ADJACENT_CATEGORIES: return 'adjacent'
+    return 'unknown'
+
+_MONTHS = {m: i for i, m in enumerate(
+    ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'], start=1)}
+_MONTH_NAMES_FULL = {m: i for i, m in enumerate(
+    ['january','february','march','april','may','june','july','august',
+     'september','october','november','december'], start=1)}
+_MONTH_LOOKUP = {**_MONTHS, **_MONTH_NAMES_FULL}
+
+
+def _month_to_num(m: str) -> int | None:
+    return _MONTH_LOOKUP.get((m or '').strip().lower()[:9])
+
+
+def extract_publication_date(result: dict) -> tuple[str | None, str | None, int | None]:
+    """Try multiple signals to date a case-study page. Returns
+    (iso_date_or_year_string, source_label, year_int). Preference order:
+    Google snippet → URL path → markdown body → metadata. Year-only is fine."""
+
+    # 1. Google snippet leading date ("Jan 31, 2024 — ...")
+    desc = ((result.get('searchResult') or {}).get('description') or '').strip()
+    m = re.match(r'^\s*(\w{3,9})\s+(\d{1,2}),?\s+(\d{4})\s*[—\-–]', desc, re.IGNORECASE)
+    if m:
+        mo = _month_to_num(m.group(1))
+        if mo:
+            y = int(m.group(3)); d = int(m.group(2))
+            return (f'{y}-{mo:02d}-{d:02d}', 'google_snippet', y)
+
+    # 2. URL path patterns: /YYYY/MM/DD/ or /YYYY/MM/ or year-only /YYYY/
+    url = (result.get('searchResult') or {}).get('url') or ''
+    m = re.search(r'/(\d{4})/(\d{1,2})/(\d{1,2})/', url)
+    if m and 1990 < int(m.group(1)) <= 2030:
+        return (f'{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}', 'url_path', int(m.group(1)))
+    m = re.search(r'/(\d{4})/(\d{1,2})/', url)
+    if m and 1990 < int(m.group(1)) <= 2030:
+        return (f'{m.group(1)}-{int(m.group(2)):02d}', 'url_path', int(m.group(1)))
+    m = re.search(r'/(\d{4})/', url)
+    if m and 1990 < int(m.group(1)) <= 2030:
+        return (m.group(1), 'url_year', int(m.group(1)))
+
+    # 3. Markdown body: "Published <date>" or "Posted on <date>"
+    md = (result.get('markdown') or result.get('text') or '')[:5000].lower()
+    m = re.search(r'(?:published|posted)(?:\s+on)?\s*[:\-]?\s*(\w{3,9})\s+(\d{1,2}),?\s+(\d{4})', md)
+    if m:
+        mo = _month_to_num(m.group(1))
+        if mo:
+            y = int(m.group(3))
+            return (f'{y}-{mo:02d}-{int(m.group(2)):02d}', 'body', y)
+
+    # 4. Stand-alone year mention adjacent to "case study" / "deployment"
+    m = re.search(r'(20\d{2})\s+(?:case\s+study|deployment)', md)
+    if m:
+        return (m.group(1), 'body_year', int(m.group(1)))
+
+    return (None, None, None)
 
 
 def phase_case_studies(client, vendor_filter: Optional[list[str]] = None,
@@ -422,6 +537,7 @@ def phase_case_studies(client, vendor_filter: Optional[list[str]] = None,
             url = (it.get('searchResult') or {}).get('url') or it.get('url', '')
             title = (it.get('metadata') or {}).get('title') or (it.get('searchResult') or {}).get('title') or ''
             md = it.get('markdown') or it.get('text') or ''
+            pub_date, pub_source, pub_year = extract_publication_date(it)
             matches = scan_for_hospitals(md, hospital_index)
             for m in matches:
                 page_matches += 1
@@ -432,6 +548,9 @@ def phase_case_studies(client, vendor_filter: Optional[list[str]] = None,
                     'facility_name': m['facility_name'], 'state': m['state'],
                     'snippet': m['snippet'],
                     'confidence': m.get('confidence', 'medium'),
+                    'publication_date': pub_date,
+                    'publication_date_source': pub_source,
+                    'publication_year': pub_year,
                 })
         if verbose and page_matches:
             print(f'    → {page_matches} hospital mentions across {len(data.get("results", []))} pages')
@@ -470,6 +589,9 @@ def merge_case_studies_into_per_ccn_cache(case_findings: dict[str, list[dict]],
                 'page_url': f['page_url'], 'page_title': f['page_title'],
                 'snippet': f['snippet'],
                 'confidence': f.get('confidence', 'medium'),
+                'publication_date': f.get('publication_date'),
+                'publication_date_source': f.get('publication_date_source'),
+                'publication_year': f.get('publication_year'),
             }
             if not v:
                 existing_vendor_map[f['vendor']] = {
@@ -481,16 +603,25 @@ def merge_case_studies_into_per_ccn_cache(case_findings: dict[str, list[dict]],
             else:
                 v.setdefault('case_study_evidence', []).append(ev)
         vendors = list(existing_vendor_map.values())
-        # Compute per-vendor max_confidence across all evidence (case-study + Indeed)
+        # Compute per-vendor max_confidence + earliest publication year across all evidence
         for v in vendors:
             confs = set()
+            years: list[int] = []
             for ev in v.get('case_study_evidence', []):
                 if ev.get('confidence'): confs.add(ev['confidence'])
+                py = ev.get('publication_year')
+                if isinstance(py, int) and 1990 < py <= 2030: years.append(py)
             # Indeed evidence is treated as 'medium' (no state-context check exists for Indeed
             # since the search itself is hospital-scoped — but still don't promote to 'high').
             if v.get('job_url') and not confs:
                 confs.add('medium')
             v['max_confidence'] = 'high' if 'high' in confs else ('medium' if confs else 'unknown')
+            v['earliest_publication_year'] = min(years) if years else None
+            v['inferred_recompete_year'] = (
+                v['earliest_publication_year'] + DEFAULT_CONTRACT_TERM_YEARS
+                if v['earliest_publication_year'] else None
+            )
+            v['directness'] = _directness(v.get('category', ''))
 
         # Recompute aggregates
         record['vendors_found'] = vendors
@@ -499,18 +630,32 @@ def merge_case_studies_into_per_ccn_cache(case_findings: dict[str, list[dict]],
         record['has_firefly_competitor'] = any(v.get('is_firefly_competitor') for v in vendors)
         record['legacy_signal'] = (record.get('jobs_scanned', 0) > 0
                                     and not vendors)
-        # Primary: ONLY high-confidence vendors auto-populate incumbent_primary_vendor
-        # per the confidence invariant. Medium-only matches stay in vendors_found for
-        # human verification but never get auto-promoted.
+        # Primary selection per the confidence + directness invariants:
+        # (1) only HIGH-confidence vendors are eligible
+        # (2) among eligible, prefer direct (Firefly-category) competitor first,
+        #     then adjacent competitor, then any high-conf
         high = [v for v in vendors if v.get('max_confidence') == 'high']
-        comps_high = [v for v in high if v.get('is_firefly_competitor')]
+        direct_comps = [v for v in high if v.get('is_firefly_competitor')
+                                       and v.get('directness') == 'direct']
+        adjacent_comps = [v for v in high if v.get('is_firefly_competitor')
+                                         and v.get('directness') == 'adjacent']
         record['primary_incumbent'] = (
-            comps_high[0] if comps_high else (high[0] if high else None)
+            direct_comps[0] if direct_comps else
+            adjacent_comps[0] if adjacent_comps else
+            (high[0] if high else None)
         )
         # Per-facility max confidence (highest of any vendor's max)
         any_high = any(v.get('max_confidence') == 'high' for v in vendors)
         any_med = any(v.get('max_confidence') == 'medium' for v in vendors)
         record['max_confidence'] = 'high' if any_high else ('medium' if any_med else 'none')
+        # Per-facility max directness (only counts HIGH-confidence vendors; medium-only
+        # candidates don't earn a directness flag until they're verified)
+        directnesses = {v.get('directness') for v in high}
+        record['max_directness'] = (
+            'direct' if 'direct' in directnesses else
+            'adjacent' if 'adjacent' in directnesses else
+            'none'
+        )
         record['has_case_study_evidence'] = True
         cache_path.write_text(json.dumps(record, indent=2))
         updated += 1
@@ -639,7 +784,11 @@ INCUMBENT_COLS = [
     'incumbent_evidence_url',
     'incumbent_evidence_source',        # indeed | case_study | both
     'incumbent_case_study_count',       # # of case-study pages mentioning this hospital
-    'incumbent_inferred_vintage_year',
+    'incumbent_inferred_vintage_year',    # earliest publication year of any HIGH-conf vendor evidence
+    'incumbent_inferred_recompete_year',  # earliest_year + DEFAULT_CONTRACT_TERM_YEARS
+    'incumbent_recompete_status',         # past | current_window | future | unknown
+    'incumbent_primary_directness',       # direct | adjacent | unknown (per primary vendor)
+    'incumbent_max_directness',           # direct | adjacent | none (per facility, HIGH-conf only)
 ]
 
 
@@ -697,9 +846,31 @@ def merge_into_mart() -> int:
         r['incumbent_evidence_source'] = '+'.join(sources)
         cs_count = sum(len(v.get('case_study_evidence') or []) for v in (d.get('vendors_found') or []))
         r['incumbent_case_study_count'] = cs_count or ''
-        # Vintage: first_seen from Indeed; case-study date parsing deferred
-        first_seen = (primary or {}).get('first_seen') or d.get('earliest_job_post') or ''
-        r['incumbent_inferred_vintage_year'] = first_seen[:4] if first_seen else ''
+        # Vintage: prefer case-study earliest publication year (HIGH conf vendor only —
+        # this is the ONLY incumbent-derived signal allowed to influence prioritization
+        # per Ryan's invariant, so it must rest on HIGH-confidence evidence).
+        vintage_year = (primary or {}).get('earliest_publication_year')
+        recompete = (primary or {}).get('inferred_recompete_year')
+        if not vintage_year:
+            # fall back to Indeed first_seen for backward compatibility (still HIGH-only-eligible)
+            fs = (primary or {}).get('first_seen') or d.get('earliest_job_post') or ''
+            try:
+                vintage_year = int(fs[:4]) if fs else None
+            except ValueError:
+                vintage_year = None
+        r['incumbent_inferred_vintage_year'] = vintage_year or ''
+        r['incumbent_inferred_recompete_year'] = recompete or ''
+        from datetime import date as _date
+        this_year = _date.today().year
+        if recompete:
+            if recompete < this_year:        status = 'past'
+            elif recompete <= this_year + 1: status = 'current_window'
+            else:                            status = 'future'
+        else:
+            status = ''
+        r['incumbent_recompete_status'] = status
+        r['incumbent_primary_directness'] = (primary or {}).get('directness') or ''
+        r['incumbent_max_directness'] = d.get('max_directness', '')
     with SCORED_MART.open('w', newline='') as fh:
         w = csv.DictWriter(fh, fieldnames=fields)
         w.writeheader(); w.writerows(rows)
