@@ -1058,6 +1058,24 @@ function renderDrawer() {
         <div class="forge-row"><div class="lbl">Gravity</div><div class="bar"><div style="width:${(r.forge_gravity||0)/3*100}%"></div></div><div class="v">${r.forge_gravity}/3</div></div>
         <div class="stat-row" style="border-top:1px solid #221f18; margin-top:6px; padding-top:8px"><span>Tier</span><span><span class="${tierBadge(enr)}">${enr}</span>${r.forge_capped_to_b ? ' <span style="font-size:10.5px;color:#e0883a;margin-left:4px">capped</span>' : ''}</span></div>
       </div>
+      ${r.usa_award_count_5yr ? `
+        <div class="section">
+          <div class="section-head">FEDERAL RECIPIENT (USAspending · last 5y)</div>
+          <div class="stat-row"><span>Total award</span><span style="color:#5fd08a;font-weight:600">$${(r.usa_total_award_5yr || 0).toLocaleString('en-US', {maximumFractionDigits: 0})}</span></div>
+          <div class="stat-row"><span>Awards</span><span>${r.usa_award_count_5yr} (${r.usa_contract_count_5yr || 0} contracts · ${r.usa_assistance_count_5yr || 0} grants)</span></div>
+          <div class="stat-row"><span>Largest single</span><span>$${(r.usa_largest_award_5yr || 0).toLocaleString('en-US', {maximumFractionDigits: 0})}</span></div>
+          <div class="stat-row"><span>Top funding agency</span><span>${escapeHtml(r.usa_top_funding_agency || '—')}</span></div>
+          ${r.usa_top_naics ? `<div class="stat-row"><span>Top NAICS</span><span>${escapeHtml(r.usa_top_naics)}${r.usa_top_naics_desc ? ' · ' + escapeHtml(r.usa_top_naics_desc) : ''}</span></div>` : ''}
+          ${r.usa_top_cfda ? `<div class="stat-row"><span>Top CFDA</span><span>${escapeHtml(r.usa_top_cfda)}</span></div>` : ''}
+          <div class="stat-row"><span>Matched recipient</span><span style="font-size:11px;color:#8a8273">${escapeHtml(r.usa_recipient_name || '—')} <span style="color:#6f6a5c">(sim ${(r.usa_match_confidence || 0).toFixed(2)})</span></span></div>
+          ${r.usa_evidence_url ? `<div style="margin-top:6px"><a href="${r.usa_evidence_url}" target="_blank" style="color:#5bb8d4;font-size:11px">View on USAspending →</a></div>` : ''}
+        </div>
+      ` : (r.usa_recipient_name ? `
+        <div class="section">
+          <div class="section-head">FEDERAL RECIPIENT (USAspending · last 5y)</div>
+          <div class="empty">No federal awards in 5y (matched ${escapeHtml(r.usa_recipient_name)}, sim ${(r.usa_match_confidence || 0).toFixed(2)}). Indicates a private / non-academic system without federal recipient activity.</div>
+        </div>
+      ` : '')}
       <div class="section">
         <div class="section-head">BUYING COMMITTEE</div>
         ${r.edm_title ? `
@@ -1311,6 +1329,20 @@ const AGENTS = [
       [500, 'Mandate-join + tier classification → tam.csv'],
     ],
     meta: '~45-60 min wall-clock on first run · subsequent runs use NPPES cache · $0',
+  },
+  { id: 'contracts-enricher', name: 'Federal Contracts', color: '#5fd08a', status: 'REAL',
+    needsInput: null,
+    desc: 'USAspending federal-recipient enrichment. 5y grants + contracts per facility.',
+    command: 'python3 skills/tier-b-contracts/run.py --qsos && python3 skills/tier-b-contracts/run.py --merge',
+    artifact: 'skills/tier-b-contracts/run.py',
+    previewFile: 'skills/tier-b-contracts/run.py',
+    stages: [
+      [400, 'Resolving recipient names via USAspending autocomplete…'],
+      [600, 'Splitting contract (A/B/C/D) vs assistance (02-05) calls…'],
+      [400, 'Post-filtering on exact recipient name match…'],
+      [300, 'Aggregating per-facility: count, total $, top NAICS / CFDA / agency'],
+    ],
+    meta: '~30 sec for 5 QSOs · direct api.usaspending.gov · no key · $0',
   },
   { id: 'standalone-scorer', name: 'Standalone Scorer', color: '#5bb8d4', status: 'REAL',
     needsInput: null,
