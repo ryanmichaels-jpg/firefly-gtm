@@ -39,6 +39,16 @@ champion:
     - security manager
     - security officer
     - security director
+    - manager of security      # catches "Manager of Security Technology" / "Manager Security Operations"
+    - manager security
+    - security technology       # catches "Public Safety/Security Technology" (UW Medicine pattern)
+    - security tech
+    # Public Safety (Harborview / UW Medicine canonical title)
+    - public safety
+    - manager of public safety
+    - director of public safety
+    - chief of public safety
+    - public safety director
     # Safety roles
     - vp safety
     - chief safety
@@ -95,6 +105,11 @@ influencer:
     - cio
     - chief information
     - chief information officer
+    - ciso
+    - chief information security
+    - information security
+    - cybersecurity
+    - cyber security
     - risk manager
     - chief risk
     - compliance officer

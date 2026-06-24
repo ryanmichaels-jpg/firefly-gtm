@@ -30,11 +30,16 @@ This is **four months before** Washington's RCW 49.19 enforcement begins (2026-0
 
 | Role | Name | Source | Notes |
 |---|---|---|---|
-| EDM (NPPES seed) | **Sommer Kleweno Walley** | NPPES auth_official | Interim CEO since 2021 ([UW Newsroom](https://newsroom.uw.edu/news-releases/sommer-kleweno-walley-named-harborview-ceo)) |
-| Likely champion | **VP / Director of Security & Safety**, Harborview | confirm via IAHSS directory / Harborview org chart | not surfaced in public search; security org reports through UW Medicine |
+| EDM (NPPES seed + LinkedIn confirmed) | **Sommer Kleweno Walley** | [LinkedIn](https://www.linkedin.com/in/sommer-kleweno-walley-3b330aab) · [UW Newsroom](https://newsroom.uw.edu/news-releases/sommer-kleweno-walley-named-harborview-ceo) | CEO Harborview Medical Center (since 2021 interim, permanent thereafter) |
+| **Champion (security tech buyer) — CONFIRMED via Apify LinkedIn** | **Shaun Geraghty — Manager of Public Safety/Security Technology, UW Medicine** | [LinkedIn](https://www.linkedin.com/in/shaungeraghty) | **The direct buyer.** UW Medicine system-level role responsible for security technology procurement; covers Harborview as the flagship campus. Title surfaced by raw scrape — classifier missed it because it's "Manager of Public Safety/Security Technology" not the standard "Director of Security" pattern. |
+| **Champion (ED Ops + Nursing) — CONFIRMED via Apify LinkedIn** | **Timothy Fredrickson — Assistant Administrator + Associate CNO, Harborview Emergency Services** | [LinkedIn](https://www.linkedin.com/in/timothy-fredrickson-87b773103) | Direct line of authority over the ED where the Feb 14 incident played out; co-owns staff-safety with the security org |
 | Likely sponsor | **Sommer Kleweno Walley** (CEO) | overlapping with EDM | post-Feb-14 incident, this is in her direct line |
-| Influencer | **Chief Nursing Officer** | Harborview public-facing nursing leadership |  |
-| Influencer | **Anthony** (KingCo Facilities Mgmt Division) | [DES proposal Apr 2024](https://des.wa.gov/sites/default/files/2024-02/2024-03-28-KingCoFacMgmtDiv-HarborviewMC-DB-App.pdf) | facilities-side decision-maker |
+| Influencer (WPV-adjacent clinical) — CONFIRMED via Apify | **Heather Gebhardt — Licensed Clinical Psychologist · Suicide Prevention · Healthcare Workforce Well-Being & Safety** | [LinkedIn](https://www.linkedin.com/in/heather-gebhardt) | Workforce well-being lens — relevant for staff-trauma response after the Feb 14 event |
+| Influencer (Quality/Safety) — CONFIRMED via Apify | **James Churgai — Healthcare Leader: Quality, Safety, Operational Excellence** | [LinkedIn](https://www.linkedin.com/in/james-churgai) | quality + safety policy lens |
+| Influencer (Cyber/Tech) — CONFIRMED via Apify | **DJ Kern — Cybersecurity Specialist, Healthcare Info Security** | [LinkedIn](https://www.linkedin.com/in/djkerncybersecurity) | network/integration counterpart for any Lattice gateway deployment |
+| Influencer (CMO Harborview) — CONFIRMED via Apify | **David Zonies, MD, MPH, MBA, FACS, FACHE — CMO Harborview · Professor of Surgery** | [LinkedIn](https://www.linkedin.com/in/davidzonies) | medical staff stakeholder |
+| Influencer (CMO UW Medicine system) — CONFIRMED via Apify | **Anneliese Schleyer — CMO UW Medicine** | [LinkedIn](https://www.linkedin.com/in/anneliese-schleyer-695603298) | parent-system clinical sign-off |
+| Influencer (Facilities) | **Anthony** (KingCo Facilities Mgmt Division) | [DES proposal Apr 2024](https://des.wa.gov/sites/default/files/2024-02/2024-03-28-KingCoFacMgmtDiv-HarborviewMC-DB-App.pdf) | facilities-side decision-maker — King County is the owner |
 
 ## One-off draft
 
