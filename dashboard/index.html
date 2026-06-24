@@ -450,6 +450,12 @@
         <option value="In force">In force</option>
         <option value="Enforcement">Enforcement</option>
       </select>
+      <select id="f-standalone">
+        <option value="All">Standalone: all</option>
+        <option value="Primary">Primary only</option>
+        <option value="Deprioritized">Deprioritized only</option>
+        <option value="Excluded">Excluded only</option>
+      </select>
       <div class="filter-chip" id="f-qso">★ QSO only</div>
       <span class="filter-meta" id="filter-meta">—</span>
       <div class="fflink" id="filter-clear" style="font-size:11.5px; color:#7d7565; cursor:pointer">Clear</div>
@@ -529,6 +535,7 @@ const state = {
   fState: 'All',
   fT1: true, fT2: true, fT3: true,
   fMandate: 'All',
+  fStandalone: 'All',
   fQso: false,
   sortKey: 'forge_total',
   sortDir: -1,
@@ -563,6 +570,7 @@ function matchRow(r) {
   const t = r.tier_num;
   if (!((t === 1 && state.fT1) || (t === 2 && state.fT2) || (t === 3 && state.fT3))) return false;
   if (state.fMandate !== 'All' && r.mandate_status_display !== state.fMandate) return false;
+  if (state.fStandalone !== 'All' && r.standalone_band !== state.fStandalone) return false;
   if (state.fQso && !r.is_qso_candidate) return false;
   if (state.search) {
     const q = state.search.toLowerCase();
@@ -574,10 +582,20 @@ function matchRow(r) {
   return true;
 }
 
+const TIER_RANK = { A: 0, B: 1, C: 2, X: 3 };
+
 function sortRecords(arr) {
   const k = state.sortKey, d = state.sortDir;
   return arr.slice().sort((a, b) => {
     if (k === 'name') return a.name < b.name ? d : a.name > b.name ? -d : 0;
+    if (k === 'forge_total') {
+      // Composite: tier asc (A first), then standalone_score desc, then forge_total desc
+      const ta = TIER_RANK[a.forge_tier] ?? 9, tb = TIER_RANK[b.forge_tier] ?? 9;
+      if (ta !== tb) return (ta - tb) * (d < 0 ? 1 : -1);
+      const sa = a.standalone_score ?? 0, sb = b.standalone_score ?? 0;
+      if (sa !== sb) return (sb - sa) * (d < 0 ? 1 : -1);
+      return ((a.forge_total || 0) - (b.forge_total || 0)) * d;
+    }
     let av = a[k], bv = b[k];
     if (k === 'days_to_deadline') { av = av == null ? 99999 : av; bv = bv == null ? 99999 : bv; }
     return ((av || 0) - (bv || 0)) * d;
@@ -624,6 +642,7 @@ function render() {
   $('#f-qso').classList.toggle('on', state.fQso);
   $('#f-state').value = state.fState;
   $('#f-mandate').value = state.fMandate;
+  $('#f-standalone').value = state.fStandalone;
   $('#search-input').value = state.search;
 
   // visible record set
@@ -683,7 +702,7 @@ function renderOverview() {
       <div style="font-size:10px; letter-spacing:0.12em; color:#7d7565; font-weight:700; position:absolute; transform:translate(2px,-32px)">QUALIFICATION FUNNEL · HEALTHCARE CYCLE</div>
       ${funnelStep('TAM',       md.total,  'total addressable', 1.00, false)}
       ${funnelStep('Scored',    md.scored, 'FORGE-scored',       pct(md.scored, md.total).replace('%','')/100, false)}
-      ${funnelStep('Tier A',    tierA,     'forge ≥ 12',         pct(tierA,  md.total).replace('%','')/100, false)}
+      ${funnelStep('Tier A',    tierA,     'forge ≥ 7',         pct(tierA,  md.total).replace('%','')/100, false)}
       ${funnelStep('Qualified', md.qualified, '★ QSO',           pct(md.qualified, md.total).replace('%','')/100, true)}
     </div>
 
@@ -779,7 +798,7 @@ function renderCampaigns(filtered) {
               <div class="cell muted">${escapeHtml(r.system || '—')}</div>
               <div class="cell"><div class="city">${escapeHtml(r.city)}</div><div class="state">${r.state}</div></div>
               <div class="cell mono">${r.beds || '—'}</div>
-              <div class="cell forge-cell"><div class="forge-bar"><div style="width:${(r.forge_total||0)/27*100}%"></div></div><span class="forge-num">${r.forge_total}</span></div>
+              <div class="cell forge-cell"><div class="forge-bar"><div style="width:${(r.forge_total||0)/9*100}%"></div></div><span class="forge-num">${r.forge_total}</span></div>
               <div class="cell"><span class="${mandateClass(r.mandate_status_display)}">${r.mandate_status_display || '—'}</span></div>
               <div class="cell mono">${daysLabel(r)}</div>
               <div class="cell ellipsis italic" style="font-size:11.5px">not enriched</div>
@@ -823,7 +842,7 @@ function renderAccounts(filtered) {
               <div class="cell muted">${escapeHtml(r.system || '—')}</div>
               <div class="cell"><div class="city">${escapeHtml(r.city)}</div><div class="state">${r.state}</div></div>
               <div class="cell mono">${r.beds || '—'}</div>
-              <div class="cell forge-cell"><div class="forge-bar"><div style="width:${(r.forge_total||0)/27*100}%"></div></div><span class="forge-num">${r.forge_total}</span></div>
+              <div class="cell forge-cell"><div class="forge-bar"><div style="width:${(r.forge_total||0)/9*100}%"></div></div><span class="forge-num">${r.forge_total}</span></div>
               <div class="cell"><span class="${mandateClass(r.mandate_status_display)}">${r.mandate_status_display || '—'}</span></div>
               <div class="cell mono">${daysLabel(r)}</div>
               <div class="cell muted ${r.edm_title?'':'italic'}">${escapeHtml(r.edm_title || '— Tier B')}</div>
@@ -1021,12 +1040,23 @@ function renderDrawer() {
         <div class="stat-row"><span>Effective date</span><span>${r.effective_date || '—'}</span></div>
         <div class="stat-row"><span>Days to deadline</span><span>${r.days_to_deadline == null ? '—' : (r.days_to_deadline >= 0 ? r.days_to_deadline + 'd to' : (-r.days_to_deadline) + 'd since')}</span></div>
       </div>
+      ${r.standalone_score != null ? `
+        <div class="section">
+          <div class="section-head">STANDALONE INDEPENDENCE · ${r.standalone_score.toFixed(1)}/100</div>
+          <div style="margin-bottom:8px">
+            <span style="display:inline-block;padding:3px 8px;border-radius:9px;font-size:10.5px;font-weight:600;letter-spacing:0.05em;background:${({Primary:'#1d3a26',Deprioritized:'#2a261d',Excluded:'#1a1814'})[r.standalone_band] || '#2a261d'};color:${({Primary:'#5fd08a',Deprioritized:'#cfc8b8',Excluded:'#7d7565'})[r.standalone_band] || '#cfc8b8'}">${r.standalone_band || '—'}</span>
+            ${r.affiliation_unverified ? `<span style="display:inline-block;margin-left:6px;padding:3px 8px;border-radius:9px;font-size:10.5px;background:#2a261d;color:#e0883a">AHRQ unverified</span>` : ''}
+          </div>
+          <div class="stat-row"><span>Parent system</span><span>${escapeHtml(r.system_name || 'Standalone')}</span></div>
+          <div class="stat-row"><span>Facilities in system</span><span>${r.system_hospital_count != null ? r.system_hospital_count : '—'}</span></div>
+        </div>
+      ` : ''}
       <div class="section">
-        <div class="section-head">FORGE SCORE · ${r.forge_total}/27</div>
+        <div class="section-head">FORGE SCORE · ${r.forge_total}/9${r.forge_capped_to_b ? ' · A→B CAPPED (mega-IDN)' : ''}</div>
         <div class="forge-row"><div class="lbl">Acute Need</div><div class="bar"><div style="width:${(r.forge_acute_need||0)/3*100}%"></div></div><div class="v">${r.forge_acute_need}/3</div></div>
         <div class="forge-row"><div class="lbl">Event</div><div class="bar"><div style="width:${(r.forge_event||0)/3*100}%"></div></div><div class="v">${r.forge_event}/3</div></div>
         <div class="forge-row"><div class="lbl">Gravity</div><div class="bar"><div style="width:${(r.forge_gravity||0)/3*100}%"></div></div><div class="v">${r.forge_gravity}/3</div></div>
-        <div class="stat-row" style="border-top:1px solid #221f18; margin-top:6px; padding-top:8px"><span>Tier</span><span><span class="${tierBadge(enr)}">${enr}</span></span></div>
+        <div class="stat-row" style="border-top:1px solid #221f18; margin-top:6px; padding-top:8px"><span>Tier</span><span><span class="${tierBadge(enr)}">${enr}</span>${r.forge_capped_to_b ? ' <span style="font-size:10.5px;color:#e0883a;margin-left:4px">capped</span>' : ''}</span></div>
       </div>
       <div class="section">
         <div class="section-head">BUYING COMMITTEE</div>
@@ -1095,6 +1125,7 @@ function wire() {
   // state filter
   $('#f-state').addEventListener('change', e => { state.fState = e.target.value; render(); });
   $('#f-mandate').addEventListener('change', e => { state.fMandate = e.target.value; render(); });
+  $('#f-standalone').addEventListener('change', e => { state.fStandalone = e.target.value; render(); });
   // tier chips
   $$('.filter-chip[data-tier]').forEach(c => c.addEventListener('click', () => {
     const t = c.dataset.tier;
@@ -1106,7 +1137,7 @@ function wire() {
   $('#f-qso').addEventListener('click', () => { state.fQso = !state.fQso; render(); });
   $('#filter-clear').addEventListener('click', () => {
     state.fState = 'All'; state.fT1 = true; state.fT2 = true; state.fT3 = true;
-    state.fMandate = 'All'; state.fQso = false; state.search = '';
+    state.fMandate = 'All'; state.fStandalone = 'All'; state.fQso = false; state.search = '';
     render();
   });
   // drawer mask
@@ -1244,7 +1275,7 @@ const STARTER_PROMPTS = [
   },
   {
     color: '#5fd08a',
-    text: "What's hot in my 15 states?",
+    text: "What's hot across the TAM?",
     sub: 'High-signal facts: mandates · OSHA · QSO highlights',
     intent: 'whats_hot',
   },
@@ -1268,30 +1299,44 @@ const STARTER_PROMPTS = [
 const AGENTS = [
   { id: 'tam-builder', name: 'TAM Builder', color: '#5fd08a', status: 'REAL',
     needsInput: null,
-    desc: 'Pulls CMS HGI → AHRQ → POS → NPPES → Census; outputs tam.csv (2,353 facilities).',
+    desc: 'Pulls CMS HGI → AHRQ → POS → NPPES → Census; outputs tam.csv (50 states + DC).',
     command: 'python3 skills/seed-tier-c/run.py --all',
     artifact: 'skills/seed-tier-c/SKILL.md',
     previewFile: 'skills/seed-tier-c/SKILL.md',
     stages: [
-      [600, 'Loading CMS Hospital General Information (15 states)…'],
-      [700, 'Filtering to 2,354 hospitals · deduping CCN+address…'],
-      [600, 'Joining AHRQ Compendium (95.8% match) + CMS POS (99.8% beds)…'],
+      [600, 'Loading CMS Hospital General Information (50 states + DC)…'],
+      [700, 'Filtering to in-scope hospitals · deduping CCN+address…'],
+      [600, 'Joining AHRQ Compendium + CMS POS (beds)…'],
       [700, 'NPPES enrichment cached · Census geocoder fast-path…'],
       [500, 'Mandate-join + tier classification → tam.csv'],
     ],
-    meta: '~25 min wall-clock on first run · subsequent runs use NPPES cache · $0',
+    meta: '~45-60 min wall-clock on first run · subsequent runs use NPPES cache · $0',
+  },
+  { id: 'standalone-scorer', name: 'Standalone Scorer', color: '#5bb8d4', status: 'REAL',
+    needsInput: null,
+    desc: 'Ranks facilities by independence: 100 − 18·log₂(N). Federal-gates VA/IHS/DoD/Tribal/Gov-Federal.',
+    command: 'python3 skills/standalone-score/run.py --all',
+    artifact: 'skills/standalone-score/SKILL.md',
+    previewFile: 'skills/standalone-score/SKILL.md',
+    stages: [
+      [400, 'Loading CMS HGI + AHRQ Compendium 2023…'],
+      [400, 'Computing StandaloneScore = max(0, 100 − 18·log₂(N))…'],
+      [300, 'Applying federal gate · banding (Primary ≥40, Deprioritized <40)…'],
+      [300, 'Sorting score desc, N asc → hgi_50states_scored.csv'],
+    ],
+    meta: '~5 sec · stdlib only · pure function · 12 unit tests · $0',
   },
   { id: 'forge-scorer', name: 'FORGE Scorer', color: '#f6a429', status: 'REAL',
     needsInput: null,
-    desc: 'Scores Fit · Acute × Event × Gravity → 0-27, assigns tier A/B/C/X.',
+    desc: 'Scores Fit · Acute × Event × Gravity → 0-27, assigns tier A/B/C/X. Joins StandaloneScore.',
     command: 'python3 skills/forge-score/run.py --all',
     artifact: 'skills/forge-score/SKILL.md',
     previewFile: 'skills/forge-score/SKILL.md',
     stages: [
-      [400, 'Reading tam.csv (2,353 rows)…'],
-      [500, 'Phase 1: AHRQ safety-net proxy enrich…'],
+      [400, 'Reading tam.csv…'],
+      [500, 'Phase 1: AHRQ safety-net proxy + StandaloneScore join…'],
       [600, 'Phase 2: Acute × Event × Gravity scoring…'],
-      [400, 'Computing tiers: A=622 · B=426 · C=94 · X=1211 · writing tam_scored.csv'],
+      [400, 'Tier banding → writing tam_scored.csv'],
     ],
     meta: '~30 sec local · no API calls · $0',
   },
@@ -1508,7 +1553,7 @@ function resolveAgentInput(agent, needs, text) {
     const code = STATES[key] || (Object.values(STATES).includes(text.toUpperCase()) ? text.toUpperCase() : null);
     if (!code) {
       pushChatMsg({ role: 'assistant',
-        text: `Couldn't match <strong>"${escapeHtml(text)}"</strong> to one of the 15 priority states. Try a 2-letter code (WA, NY, TX) or full name (Washington, New York, Texas):`,
+        text: `Couldn't match <strong>"${escapeHtml(text)}"</strong> to a U.S. state. Try a 2-letter code (WA, NY, TX) or full name (Washington, New York, Texas):`,
         cards: Object.entries({WA:'#5fd08a',CA:'#f6a429',NY:'#9b8cff',NJ:'#5bb8d4',LA:'#ff5cae',IL:'#ffcf6b',TX:'#e0a04a',MA:'#5fd08a'}).map(([st, color]) => ({
           title: st, sub: 'click to use', badge: 'STATE', badgeColor: color,
           action: { type: 'prompt', text: st },
@@ -1607,7 +1652,7 @@ function respondFacilityMatches(query, matches) {
       : `Found ${matches.length} facilities matching <strong>"${escapeHtml(query)}"</strong>. Top match: <strong>${escapeHtml(top.name)}</strong>.`,
     cards: matches.map(r => ({
       title: `${r.is_qso_candidate ? '★ ' : ''}${r.name} · ${r.state}`,
-      sub: `FORGE ${r.forge_total}/27 (${r.forge_tier}) · ${r.beds || '?'} beds · ${r.parent_system || 'Independent'}${r.osha_severe_injury_count_24mo ? ' · ' + r.osha_severe_injury_count_24mo + '× OSHA SIR' : ''}`,
+      sub: `FORGE ${r.forge_total}/9 (${r.forge_tier}) · ${r.beds || '?'} beds · ${r.parent_system || 'Independent'}${r.osha_severe_injury_count_24mo ? ' · ' + r.osha_severe_injury_count_24mo + '× OSHA SIR' : ''}`,
       badge: r.is_qso_candidate ? 'QSO' : ({1:'L',2:'M',3:'S'})[r.tier_num] || '?',
       badgeColor: r.is_qso_candidate ? '#f6a429' : (r.tier_num === 1 ? '#ffcf6b' : r.tier_num === 2 ? '#e0883a' : '#9a7c52'),
       action: { type: 'account', ccn: r.ccn },
@@ -1643,7 +1688,7 @@ function respondQsoFile(ccn, name) {
   const row = DATA && DATA.rows.find(r => r.ccn === ccn);
   if (!row) return;
   pushChatMsg({ role: 'assistant',
-    text: `<strong>${escapeHtml(name)}</strong> · ${row.state} · ${row.beds || '?'} beds · FORGE ${row.forge_total}/27 (${row.forge_tier}) · mandate: ${row.mandate_status_display || '—'}${row.osha_severe_injury_count_24mo ? ` · <strong style="color:#ff6b5e">OSHA SIRs: ${row.osha_severe_injury_count_24mo}</strong>` : ''}`,
+    text: `<strong>${escapeHtml(name)}</strong> · ${row.state} · ${row.beds || '?'} beds · FORGE ${row.forge_total}/9 (${row.forge_tier}) · mandate: ${row.mandate_status_display || '—'}${row.osha_severe_injury_count_24mo ? ` · <strong style="color:#ff6b5e">OSHA SIRs: ${row.osha_severe_injury_count_24mo}</strong>` : ''}`,
     cards: [
       { title: 'Open detail drawer', sub: 'Account snapshot + FORGE breakdown + OSHA evidence', badge: 'DETAIL', badgeColor: '#5bb8d4', action: { type: 'account', ccn } },
       { title: 'Hand-written QSO brief', sub: `documents/qso-briefs/qso-N-*.md (5 of 5 wrote)`, badge: 'BRIEF', badgeColor: '#f6a429', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs' } },
@@ -1686,7 +1731,7 @@ function respondOsha() {
   const tagged = DATA.rows.filter(r => r.osha_severe_injury_count_24mo).sort((a,b) => (b.osha_severe_injury_count_24mo||0) - (a.osha_severe_injury_count_24mo||0));
   const top10 = tagged.slice(0, 10);
   pushChatMsg({ role: 'assistant',
-    text: `<strong>${tagged.length}</strong> facilities have OSHA-documented severe-injury reports in the last 24 months. (5 of 15 priority states are state-plan OSHA and excluded from the federal SIR dataset.) Top 10:`,
+    text: `<strong>${tagged.length}</strong> facilities have OSHA-documented severe-injury reports in the last 24 months. (5 states are state-plan OSHA and excluded from the federal SIR dataset: CA, WA, OR, MD, NC.) Top 10:`,
     cards: top10.map(r => ({
       title: `${r.name} · ${r.state}`,
       sub: `${r.osha_severe_injury_count_24mo} SIR(s) · most recent ${r.osha_first_evidence_date} · ${r.osha_first_evidence_nature || ''}`,
@@ -1704,7 +1749,7 @@ function respondTierA() {
     cards: ta.map(r => ({
       title: `${r.name} · ${r.state}`,
       sub: `${r.beds || '?'} beds · ${r.parent_system || 'Independent'}`,
-      badge: `${r.forge_total}/27`, badgeColor: '#f6a429',
+      badge: `${r.forge_total}/9`, badgeColor: '#f6a429',
       action: { type: 'account', ccn: r.ccn },
     })),
   });
@@ -1746,7 +1791,7 @@ function respondDraft(query) {
   }
   const r = matches[0];
   pushChatMsg({ role: 'assistant',
-    text: `<strong>${escapeHtml(r.name)}</strong> · ${r.state} · FORGE ${r.forge_total}/27. ${r.is_qso_candidate ? 'This is a hand-picked QSO — both hand-written and auto-generated one-offs exist.' : 'Not in the hand-picked 5. To auto-draft, run: <code>python3 skills/one-off-writer/run.py --ccn ' + r.ccn + '</code>'}`,
+    text: `<strong>${escapeHtml(r.name)}</strong> · ${r.state} · FORGE ${r.forge_total}/9. ${r.is_qso_candidate ? 'This is a hand-picked QSO — both hand-written and auto-generated one-offs exist.' : 'Not in the hand-picked 5. To auto-draft, run: <code>python3 skills/one-off-writer/run.py --ccn ' + r.ccn + '</code>'}`,
     cards: [
       { title: 'Open in detail drawer', sub: 'See signals before drafting', badge: 'ACCOUNT', badgeColor: '#5bb8d4', action: { type: 'account', ccn: r.ccn } },
     ],

@@ -248,25 +248,27 @@ def phase_merge() -> Path:
                     f'OSHA SIR — {len(hits)} severe injury report(s) in last 24mo · '
                     f'most recent {top["event_date"]} · ' + (top.get('nature_title') or 'nature unknown')
                 )
-                # recompute forge_total = acute × event × gravity (FORGE product)
+                # Recompute via forge-score's score_row so we share one source
+                # of truth for the additive formula + StandaloneScore cap.
+                # Imported lazily to keep tier-b-osha self-contained otherwise.
                 try:
-                    event = int(r.get('event') or 0)
-                    gravity = int(r.get('gravity') or 0)
-                    fit_pass = str(r.get('fit_pass', 'False')).lower() == 'true'
-                    if fit_pass:
-                        total = 3 * event * gravity
-                        r['forge_total'] = total
-                        if total >= 12:
-                            r['forge_tier'] = 'A'
-                        elif total >= 6:
-                            r['forge_tier'] = 'B'
-                        elif total >= 1:
-                            r['forge_tier'] = 'C'
-                        else:
-                            r['forge_tier'] = 'X'
+                    import importlib.util
+                    spec = importlib.util.spec_from_file_location(
+                        'forge_score_mod',
+                        ROOT / 'skills' / 'forge-score' / 'run.py')
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                    recomputed = mod.score_row(r)
+                    r['forge_total'] = recomputed['forge_total']
+                    r['forge_tier'] = recomputed['forge_tier']
+                    r['forge_capped_to_b'] = recomputed.get('forge_capped_to_b', False)
+                    r['forge_rationale'] = recomputed['forge_rationale']
                     lifted += 1
-                except (TypeError, ValueError):
-                    pass
+                except Exception as e:
+                    # Don't let an import hiccup zero the row — leave forge_total
+                    # as previously computed and flag for review.
+                    r['needs_review'] = True
+                    print(f'  ! score_row recompute failed for {r.get("ccn")}: {e}')
         else:
             for col in ('osha_severe_injury_count_24mo', 'osha_first_evidence_url',
                         'osha_first_evidence_date', 'osha_first_evidence_nature',

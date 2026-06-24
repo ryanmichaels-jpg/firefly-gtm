@@ -34,6 +34,12 @@ def _int(v):
     except (TypeError, ValueError):
         return None
 
+def _float(v):
+    try:
+        return float(v) if v not in (None, '', 'None') else None
+    except (TypeError, ValueError):
+        return None
+
 def _truthy(v) -> bool:
     return str(v).strip().lower() in ('true', '1', 'yes', 'y')
 
@@ -115,6 +121,12 @@ def main():
                 'effective_date': eff,
                 'days_to_deadline': days,
                 'edm_title': (r.get('edm_seed_title') or '').strip() or None,
+                'standalone_score': _float(r.get('standalone_score')),
+                'standalone_band': (r.get('standalone_band') or '').strip() or None,
+                'system_hospital_count': _int(r.get('system_hospital_count')),
+                'system_name': (r.get('system_name') or '').strip() or None,
+                'affiliation_unverified': _truthy(r.get('affiliation_unverified')),
+                'forge_capped_to_b': _truthy(r.get('forge_capped_to_b')),
                 'is_qso_candidate': _truthy(r.get('is_qso_candidate')),
                 'forge_rationale': (r.get('forge_rationale') or '').strip(),
                 'acute_need_evidence': (r.get('acute_need_evidence') or '').strip(),
