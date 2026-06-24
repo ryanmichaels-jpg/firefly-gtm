@@ -440,21 +440,15 @@
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex:none"><path d="M1 2.5h12L8.5 7.5v4l-3 1.5v-5.5L1 2.5Z" stroke="#8a8273" stroke-width="1.3" stroke-linejoin="round"/></svg>
       <select id="f-state"></select>
       <div style="display:flex; gap:4px">
-        <div class="filter-chip on" data-tier="1">Tier 1</div>
-        <div class="filter-chip on" data-tier="2">Tier 2</div>
-        <div class="filter-chip on" data-tier="3">Tier 3</div>
+        <div class="filter-chip on" data-tier="1">Large</div>
+        <div class="filter-chip on" data-tier="2">Medium</div>
+        <div class="filter-chip on" data-tier="3">Small</div>
       </div>
       <select id="f-mandate">
         <option value="All">Mandate: all</option>
         <option value="Upcoming">Upcoming</option>
         <option value="In force">In force</option>
         <option value="Enforcement">Enforcement</option>
-      </select>
-      <select id="f-beds">
-        <option value="0">Beds: any</option>
-        <option value="100">100+</option>
-        <option value="250">250+</option>
-        <option value="500">500+</option>
       </select>
       <div class="filter-chip" id="f-qso">★ QSO only</div>
       <span class="filter-meta" id="filter-meta">—</span>
@@ -535,7 +529,6 @@ const state = {
   fState: 'All',
   fT1: true, fT2: true, fT3: true,
   fMandate: 'All',
-  fBeds: '0',
   fQso: false,
   sortKey: 'forge_total',
   sortDir: -1,
@@ -570,7 +563,6 @@ function matchRow(r) {
   const t = r.tier_num;
   if (!((t === 1 && state.fT1) || (t === 2 && state.fT2) || (t === 3 && state.fT3))) return false;
   if (state.fMandate !== 'All' && r.mandate_status_display !== state.fMandate) return false;
-  if (state.fBeds !== '0' && (r.beds || 0) < parseInt(state.fBeds)) return false;
   if (state.fQso && !r.is_qso_candidate) return false;
   if (state.search) {
     const q = state.search.toLowerCase();
@@ -632,7 +624,6 @@ function render() {
   $('#f-qso').classList.toggle('on', state.fQso);
   $('#f-state').value = state.fState;
   $('#f-mandate').value = state.fMandate;
-  $('#f-beds').value = state.fBeds;
   $('#search-input').value = state.search;
 
   // visible record set
@@ -879,9 +870,9 @@ function renderMap(filtered) {
         <div class="row"><span class="dot1"></span>★ QSO candidate</div>
         <div class="row"><span class="dot2"></span>Active safety signal</div>
         <div class="sep"></div>
-        <div class="row"><span class="dot3"></span>Tier 1 · size = beds</div>
-        <div class="row"><span class="dot4"></span>Tier 2</div>
-        <div class="row"><span class="dot5"></span>Tier 3</div>
+        <div class="row"><span class="dot3"></span>Large · size = beds</div>
+        <div class="row"><span class="dot4"></span>Medium</div>
+        <div class="row"><span class="dot5"></span>Small</div>
       </div>
       <div class="map-card map-zoom">
         <div class="map-zoom-btn" id="map-zoom-in"><svg width="15" height="15" viewBox="0 0 15 15"><path d="M7.5 2.5v10M2.5 7.5h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
@@ -960,7 +951,7 @@ function initMap() {
       }
 
       function showTip(d, e) {
-        tip.textContent = `${d.name} · ${d.city}, ${d.state} · ${d.beds || '?'} beds · T${d.tier_num} · ${d.mandate_status_display || '—'} · FORGE ${d.forge_total}`;
+        tip.textContent = `${d.name} · ${d.city}, ${d.state} · ${d.beds || '?'} beds · ${({1:'Large',2:'Medium',3:'Small'})[d.tier_num] || '—'} · ${d.mandate_status_display || '—'} · FORGE ${d.forge_total}`;
         tip.style.opacity = 1;
       }
       function moveTip(e) {
@@ -1025,7 +1016,7 @@ function renderDrawer() {
         <div class="section-head">FACILITY</div>
         <div class="stat-row"><span>Beds (certified)</span><span>${r.beds || '—'}</span></div>
         <div class="stat-row"><span>Sub-segment</span><span>${escapeHtml(r.sub_segment)}</span></div>
-        <div class="stat-row"><span>Facility tier</span><span>${r.tier_num}</span></div>
+        <div class="stat-row"><span>Size</span><span>${{1:'Large',2:'Medium',3:'Small'}[r.tier_num] || '—'}</span></div>
         <div class="stat-row"><span>Mandate</span><span>${escapeHtml(r.mandate_name || '—')}</span></div>
         <div class="stat-row"><span>Effective date</span><span>${r.effective_date || '—'}</span></div>
         <div class="stat-row"><span>Days to deadline</span><span>${r.days_to_deadline == null ? '—' : (r.days_to_deadline >= 0 ? r.days_to_deadline + 'd to' : (-r.days_to_deadline) + 'd since')}</span></div>
@@ -1042,7 +1033,7 @@ function renderDrawer() {
         ${r.edm_title ? `
           <div class="stat-row"><span>EDM (NPPES auth_official)</span><span>${escapeHtml(r.edm_title)}</span></div>
           <div class="stat-row"><span>Name</span><span style="color:#6f6a5c;font-style:italic">redacted from public dashboard</span></div>
-        ` : `<div class="empty">No EDM identified — NPPES unmatched at Tier A</div>`}
+        ` : `<div class="empty">No EDM identified — NPPES unmatched at Tier C</div>`}
       </div>
       ${r.osha_severe_injury_count_24mo ? `
         <div class="section">
@@ -1104,7 +1095,6 @@ function wire() {
   // state filter
   $('#f-state').addEventListener('change', e => { state.fState = e.target.value; render(); });
   $('#f-mandate').addEventListener('change', e => { state.fMandate = e.target.value; render(); });
-  $('#f-beds').addEventListener('change', e => { state.fBeds = e.target.value; render(); });
   // tier chips
   $$('.filter-chip[data-tier]').forEach(c => c.addEventListener('click', () => {
     const t = c.dataset.tier;
@@ -1116,7 +1106,7 @@ function wire() {
   $('#f-qso').addEventListener('click', () => { state.fQso = !state.fQso; render(); });
   $('#filter-clear').addEventListener('click', () => {
     state.fState = 'All'; state.fT1 = true; state.fT2 = true; state.fT3 = true;
-    state.fMandate = 'All'; state.fBeds = '0'; state.fQso = false; state.search = '';
+    state.fMandate = 'All'; state.fQso = false; state.search = '';
     render();
   });
   // drawer mask
@@ -1134,6 +1124,7 @@ function initCode() {
   fetch('code.json').then(r => r.json()).then(d => {
     CODE = d;
     renderCodeTree();
+    if (CODE.files['README.md']) openCodeFile('README.md');
   }).catch(e => {
     $('#code-tree').innerHTML = `<div class="code-empty" style="padding:20px 8px;color:#ff8a7e">code.json not found — run <code>python3 dashboard/build-code-tree.py</code></div>`;
   });
@@ -1362,18 +1353,18 @@ const AGENTS = [
   },
   { id: 'qso-linkedin', name: 'QSO LinkedIn (Apify)', color: '#ff5cae', status: 'REAL',
     needsInput: 'qso',  // restricted to the 5 hand-picked
-    desc: 'Tier-C only: Apify LinkedIn scrape for the 5 hand-picked QSOs.',
+    desc: 'Tier-A only: Apify LinkedIn scrape for the 5 hand-picked QSOs.',
     command: 'python3 skills/qso-linkedin/run.py --all-qsos',
     artifact: 'documents/qso-briefs/auto/buying-committee-330101-newyork-presbyterian-hospital.md',
     previewFile: 'documents/qso-briefs/auto/buying-committee-330101-newyork-presbyterian-hospital.md',
     stages: [
-      [400, 'CLAUDE.md Tier-C gate: 5 hand-picked QSOs only…'],
+      [400, 'CLAUDE.md Tier-A gate: 5 hand-picked QSOs only…'],
       [800, 'Calling Apify actor harvestapi/linkedin-company-employees…'],
       [1500, 'Pulling 100 employees per company (5 companies × 60s each)…'],
       [400, 'Classifying titles via title-patterns.yaml → buying-committee buckets'],
       [300, '10 champions identified across 5 facilities (NYP: 4 incl. Mark Mac Donnell, Security Director)'],
     ],
-    meta: 'Apify · "Full" mode ($8/1k profiles) · ~$4 total · ~5 min · CLAUDE.md Tier-C gate',
+    meta: 'Apify · "Full" mode ($8/1k profiles) · ~$4 total · ~5 min · CLAUDE.md Tier-A gate',
   },
   { id: 'displacement', name: 'Displacement Agent', color: '#7d7565', status: 'NOT_WIRED',
     needsInput: null,
@@ -1494,7 +1485,7 @@ function resolveAgentInput(agent, needs, text) {
     if (!best || bestScore === 0) {
       pushChatMsg({ role: 'assistant',
         text: needs === 'qso'
-          ? `Couldn't match <strong>"${escapeHtml(text)}"</strong> to one of the 5 hand-picked QSOs (Tier-C gate). Pick one:`
+          ? `Couldn't match <strong>"${escapeHtml(text)}"</strong> to one of the 5 hand-picked QSOs (Tier-A gate). Pick one:`
           : `Couldn't find a facility matching <strong>"${escapeHtml(text)}"</strong> in the mart. Try a name like "harborview", "memorial hermann", "orlando health".`,
         cards: needs === 'qso' ? qsoSelectionCards(agent) : [],
       });
@@ -1550,7 +1541,7 @@ function promptAgentForInput(agent) {
   const which = agent.needsInput;
   const text = (
     which === 'facility' ? `<strong>${escapeHtml(agent.name)}</strong> needs a facility. Type a name (e.g. "harborview", "memorial hermann", "orlando health") or pick one of your QSOs:`
-    : which === 'qso' ? `<strong>${escapeHtml(agent.name)}</strong> is Tier-C gated — only runs on the 5 hand-picked QSOs. Pick one:`
+    : which === 'qso' ? `<strong>${escapeHtml(agent.name)}</strong> is Tier-A gated — only runs on the 5 hand-picked QSOs. Pick one:`
     : `<strong>${escapeHtml(agent.name)}</strong> needs a state (WA, CA, NY, NJ, LA, FL, IL, TX, AZ, MA, NC, OR, CO, CT, MD). Type a 2-letter code or full name:`
   );
   pushChatMsg({ role: 'assistant', text,
@@ -1617,7 +1608,7 @@ function respondFacilityMatches(query, matches) {
     cards: matches.map(r => ({
       title: `${r.is_qso_candidate ? '★ ' : ''}${r.name} · ${r.state}`,
       sub: `FORGE ${r.forge_total}/27 (${r.forge_tier}) · ${r.beds || '?'} beds · ${r.parent_system || 'Independent'}${r.osha_severe_injury_count_24mo ? ' · ' + r.osha_severe_injury_count_24mo + '× OSHA SIR' : ''}`,
-      badge: r.is_qso_candidate ? 'QSO' : `T${r.tier_num}`,
+      badge: r.is_qso_candidate ? 'QSO' : ({1:'L',2:'M',3:'S'})[r.tier_num] || '?',
       badgeColor: r.is_qso_candidate ? '#f6a429' : (r.tier_num === 1 ? '#ffcf6b' : r.tier_num === 2 ? '#e0883a' : '#9a7c52'),
       action: { type: 'account', ccn: r.ccn },
     })),
@@ -1657,7 +1648,7 @@ function respondQsoFile(ccn, name) {
       { title: 'Open detail drawer', sub: 'Account snapshot + FORGE breakdown + OSHA evidence', badge: 'DETAIL', badgeColor: '#5bb8d4', action: { type: 'account', ccn } },
       { title: 'Hand-written QSO brief', sub: `documents/qso-briefs/qso-N-*.md (5 of 5 wrote)`, badge: 'BRIEF', badgeColor: '#f6a429', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs' } },
       { title: 'Auto-generated brief (Account Researcher · Haiku 4.5)', sub: `documents/qso-briefs/auto/qso-auto-${ccn}-*.md · ~$0.01 cost`, badge: 'AUTO', badgeColor: '#5fd08a', action: { type: 'url', url: `https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs/auto` } },
-      { title: 'LinkedIn buying committee (Apify Tier-C)', sub: `documents/qso-briefs/auto/buying-committee-${ccn}-*.md · classified by persona-derived patterns`, badge: 'COMMITTEE', badgeColor: '#ff5cae', action: { type: 'url', url: `https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs/auto` } },
+      { title: 'LinkedIn buying committee (Apify Tier-A)', sub: `documents/qso-briefs/auto/buying-committee-${ccn}-*.md · classified by persona-derived patterns`, badge: 'COMMITTEE', badgeColor: '#ff5cae', action: { type: 'url', url: `https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/documents/qso-briefs/auto` } },
     ],
   });
 }
@@ -1735,7 +1726,7 @@ Never pre-call score Resolve or Clarity — those are confirm-on-call dimensions
 
 function respondSources() {
   pushChatMsg({ role: 'assistant',
-    text: `The engine pulls from <strong>6 free public sources</strong> at Tier-A: CMS HGI, AHRQ Compendium, CMS POS, NPPES, Census Geocoder, mandates.csv. Tier-B adds OSHA Severe Injury Reports (federal-OSHA states). Full inventory + what each gives us in docs/SOURCES.md.`,
+    text: `The engine pulls from <strong>6 free public sources</strong> at Tier-C: CMS HGI, AHRQ Compendium, CMS POS, NPPES, Census Geocoder, mandates.csv. Tier-B adds OSHA Severe Injury Reports (federal-OSHA states). Full inventory + what each gives us in docs/SOURCES.md.`,
     cards: [
       { title: 'docs/SOURCES.md', sub: 'Every source · what it gives us · where it lands · honest deferrals', badge: 'DOCS', badgeColor: '#5fd08a', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/blob/main/docs/SOURCES.md' } },
     ],
@@ -1780,7 +1771,7 @@ function respondMandates() {
 
 function respondBuyingCommittee() {
   pushChatMsg({ role: 'assistant',
-    text: `The 5 QSOs have buying-committee data scraped via Apify (Tier-C, $4 spend). Across them: <strong>10 named champions</strong> identified (Security Director / Patient Safety / WPV Coordinator titles).<br><br>NYP's <strong>Mark Mac Donnell (Security Director)</strong> is the goldmine — exactly the "otherwise-invisible role" the persona file flagged. Each QSO's classified buying committee is in <code>documents/qso-briefs/auto/buying-committee-&lt;ccn&gt;-*.md</code>.`,
+    text: `The 5 QSOs have buying-committee data scraped via Apify (Tier-A, $4 spend). Across them: <strong>10 named champions</strong> identified (Security Director / Patient Safety / WPV Coordinator titles).<br><br>NYP's <strong>Mark Mac Donnell (Security Director)</strong> is the goldmine — exactly the "otherwise-invisible role" the persona file flagged. Each QSO's classified buying committee is in <code>documents/qso-briefs/auto/buying-committee-&lt;ccn&gt;-*.md</code>.`,
     cards: [
       { title: 'Persona definitions', sub: 'context/personas/healthcare-champion.md + healthcare-edm.md', badge: 'CONTEXT', badgeColor: '#5bb8d4', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/tree/main/context/personas' } },
       { title: 'Title-pattern config', sub: 'skills/qso-linkedin/title-patterns.yaml · derived from persona files', badge: 'PATTERNS', badgeColor: '#5fd08a', action: { type: 'url', url: 'https://github.com/ryanmichaels-jpg/firefly-gtm/blob/main/skills/qso-linkedin/title-patterns.yaml' } },
